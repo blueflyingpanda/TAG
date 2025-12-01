@@ -34,11 +34,39 @@ function App() {
     // Only restore game state if user is authenticated
     return initialUser ? storage.getGameState() : null;
   });
-  const [gameId, setGameId] = useState<string | null>(() => {
+  const [, setGameId] = useState<string | null>(() => {
     // Generate or restore game ID
     const saved = localStorage.getItem("tag_current_game_id");
     return saved || null;
   });
+
+  // Hide header buttons while a game is in progress (until the game is finished)
+  const hideHeaderButtons = screen === "game-play" && gameState !== null;
+
+  useEffect(() => {
+    // Lock body scrolling when a game is in progress to prevent iOS bouncing/scroll
+    if (hideHeaderButtons) {
+      const scrollY = window.scrollY || window.pageYOffset;
+      // Fix body to prevent scrolling/bounce on iOS
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      document.body.style.width = "100%";
+      document.body.style.overflow = "hidden";
+      return () => {
+        // restore
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, scrollY);
+      };
+    }
+    return;
+  }, [hideHeaderButtons]);
 
   useEffect(() => {
     // Enforce authentication - redirect to login if user is not logged in
@@ -93,10 +121,11 @@ function App() {
     setGameId(newGameId);
     localStorage.setItem("tag_current_game_id", newGameId);
 
-    // Ensure round timer respects minimum (15s) even if caller passed a lower value
+    // Ensure round timer respects minimum (15s) and coerce skipPenalty to boolean
     const safeSettings = {
       ...settings,
       roundTimer: Math.max(settings.roundTimer, 15),
+      skipPenalty: !!settings.skipPenalty,
     };
     const newGameState = initializeGameState(safeSettings);
     setGameState(newGameState);
@@ -111,15 +140,26 @@ function App() {
     const existingWinner = checkWinCondition(gameState);
     if (existingWinner) return;
 
-    // If we've already stored/processed round results for this round and
-    // this incoming results array is empty, treat it as a duplicate/late
-    // signal and ignore it. This prevents briefly showing an empty
-    // RoundResults after the game has already transitioned.
-    if (
-      results.length === 0 &&
-      gameState.roundResults &&
-      gameState.roundResults.length === 0
-    ) {
+    // (previous duplicate-guard removed) process incoming results
+
+    // If no words were processed this round, advance to the next team
+    // immediately so the same team does not keep playing.
+    if (results.length === 0) {
+      const updatedState = { ...gameState };
+      // advance team
+      updatedState.currentTeamIndex =
+        (updatedState.currentTeamIndex + 1) %
+        updatedState.settings.selectedTeams.length;
+      if (updatedState.currentTeamIndex === 0) {
+        updatedState.currentRound += 1;
+      }
+      updatedState.roundResults = [];
+      updatedState.isRoundActive = false;
+      updatedState.roundStartTime = null;
+      updatedState.currentWordIndex = 0;
+
+      setGameState(updatedState);
+      setScreen("game-play");
       return;
     }
 
@@ -143,7 +183,8 @@ function App() {
     finalResults.forEach((result) => {
       if (result.guessed) {
         scoreChange += 1;
-      } else if (gameState.settings.skipPenalty) {
+      } else if (Boolean(gameState.settings.skipPenalty)) {
+        // coerce to boolean in case settings were stored with non-boolean values
         scoreChange -= 1;
       }
     });
@@ -208,44 +249,59 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#223164] flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl mx-auto">
+    <div
+      className={`${
+        hideHeaderButtons ? "h-screen overflow-hidden p-2" : "min-h-screen p-4"
+      } w-full bg-[#223164] flex items-center justify-center`}
+    >
+      <div
+        className={`w-full max-w-4xl mx-auto ${
+          hideHeaderButtons ? "h-full" : ""
+        }`}
+      >
         {user && (
-          <div className="mb-4 flex justify-between items-center text-white">
-            <button
-              onClick={() => {
-                setScreen("theme-selection");
-                setSelectedTheme(null);
-              }}
-              className={`px-4 py-2 rounded-lg font-semibold transition ${
-                screen === "theme-selection"
-                  ? "bg-white/20 text-white cursor-default"
-                  : "bg-[#ECACAE] text-[#223164] hover:opacity-90"
-              }`}
-              disabled={screen === "theme-selection"}
-            >
-              Home
-            </button>
-            <div className="flex gap-4 items-center">
-              <span className="text-sm">{user.email}</span>
-              <button
-                onClick={() => setScreen("game-history")}
-                className={`px-4 py-2 rounded-lg font-semibold transition ${
-                  screen === "game-history"
-                    ? "bg-white/20 text-white cursor-default"
-                    : "bg-[#ECACAE] text-[#223164] hover:opacity-90"
-                }`}
-                disabled={screen === "game-history"}
-              >
-                History
-              </button>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
-              >
-                Logout
-              </button>
+          <div className="mb-4 text-white text-center">
+            <div className="flex items-center justify-center gap-4">
+              <div className="text-sm">{user.email}</div>
             </div>
+
+            {!hideHeaderButtons && (
+              <div className="mt-3 flex items-center justify-center gap-3">
+                <button
+                  onClick={() => {
+                    setScreen("theme-selection");
+                    setSelectedTheme(null);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                    screen === "theme-selection"
+                      ? "bg-white/20 text-white cursor-default"
+                      : "bg-[#ECACAE] text-[#223164] hover:opacity-90"
+                  }`}
+                  disabled={screen === "theme-selection"}
+                >
+                  Home
+                </button>
+
+                <button
+                  onClick={() => setScreen("game-history")}
+                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                    screen === "game-history"
+                      ? "bg-white/20 text-white cursor-default"
+                      : "bg-[#ECACAE] text-[#223164] hover:opacity-90"
+                  }`}
+                  disabled={screen === "game-history"}
+                >
+                  History
+                </button>
+
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -267,7 +323,12 @@ function App() {
             onBack={() => setScreen("theme-selection")}
             onThemeCreated={(theme) => {
               // Theme will be registered on backend (verified=false)
-              // For now, just save locally and show success message
+              // Save locally for now and show success message
+              try {
+                storage.saveTheme(theme);
+              } catch (err) {
+                console.error("Failed to save theme locally:", err);
+              }
               console.log("Theme created and registered:", theme);
               setScreen("theme-selection");
             }}
@@ -291,6 +352,7 @@ function App() {
         {screen === "round-results" && user && gameState && (
           <RoundResults
             results={gameState.roundResults}
+            skipPenalty={Boolean(gameState.settings.skipPenalty)}
             onConfirm={handleRoundResultsConfirm}
             onBack={() => setScreen("game-play")}
           />

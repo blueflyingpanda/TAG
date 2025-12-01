@@ -1,6 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
-import type { GameState } from '../types';
-import { getAvailableWords, getCurrentTeam, checkWinCondition } from '../utils/game';
+import { useEffect, useRef, useState } from "react";
+import type { GameState } from "../types";
+import {
+  checkWinCondition,
+  getAvailableWords,
+  getCurrentTeam,
+  shuffleArray,
+} from "../utils/game";
 
 interface GamePlayProps {
   gameState: GameState;
@@ -9,23 +14,37 @@ interface GamePlayProps {
   onGameEnd: () => void;
 }
 
-export default function GamePlay({ gameState, setGameState, onRoundEnd, onGameEnd }: GamePlayProps) {
-  const [currentWord, setCurrentWord] = useState<string>('');
+export default function GamePlay({
+  gameState,
+  setGameState,
+  onRoundEnd,
+  onGameEnd,
+}: GamePlayProps) {
+  const [currentWord, setCurrentWord] = useState<string>("");
   const [roundWords, setRoundWords] = useState<string[]>([]);
-  const [roundResults, setRoundResults] = useState<{ word: string; guessed: boolean }[]>([]);
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+  const [roundResults, setRoundResults] = useState<
+    { word: string; guessed: boolean }[]
+  >([]);
   const [currentTime, setCurrentTime] = useState(0);
-  const intervalRef = useRef<number | null>(null);
   const timerIntervalRef = useRef<number | null>(null);
   const roundResultsRef = useRef<{ word: string; guessed: boolean }[]>([]);
-  const currentWordRef = useRef<string>('');
 
-  const availableWords = getAvailableWords(gameState.settings.theme, gameState.wordsUsed);
+  const availableWords = getAvailableWords(
+    gameState.settings.theme,
+    gameState.wordsUsed
+  );
   const currentTeam = getCurrentTeam(gameState);
-  const remainingTime = gameState.isRoundActive && gameState.roundStartTime
-    ? Math.max(0, Math.ceil((gameState.settings.roundTimer * 1000 - (Date.now() - gameState.roundStartTime)) / 1000))
-    : 0;
+  const remainingTime =
+    gameState.isRoundActive && gameState.roundStartTime
+      ? Math.max(
+          0,
+          Math.ceil(
+            (gameState.settings.roundTimer * 1000 -
+              (Date.now() - gameState.roundStartTime)) /
+              1000
+          )
+        )
+      : 0;
 
   // Update timer display every second
   useEffect(() => {
@@ -34,7 +53,13 @@ export default function GamePlay({ gameState, setGameState, onRoundEnd, onGameEn
         const startTime = gameState.roundStartTime;
         if (startTime === null) return;
 
-        const time = Math.max(0, Math.ceil((gameState.settings.roundTimer * 1000 - (Date.now() - startTime)) / 1000));
+        const time = Math.max(
+          0,
+          Math.ceil(
+            (gameState.settings.roundTimer * 1000 - (Date.now() - startTime)) /
+              1000
+          )
+        );
         setCurrentTime(time);
 
         if (time <= 0) {
@@ -50,7 +75,11 @@ export default function GamePlay({ gameState, setGameState, onRoundEnd, onGameEn
     } else {
       setCurrentTime(0);
     }
-  }, [gameState.isRoundActive, gameState.roundStartTime, gameState.settings.roundTimer]);
+  }, [
+    gameState.isRoundActive,
+    gameState.roundStartTime,
+    gameState.settings.roundTimer,
+  ]);
 
   // Remove this useEffect - words are initialized in startRound
 
@@ -60,11 +89,10 @@ export default function GamePlay({ gameState, setGameState, onRoundEnd, onGameEn
       return;
     }
 
-    const shuffled = [...availableWords].sort(() => Math.random() - 0.5);
+    const shuffled = shuffleArray([...availableWords]);
     setRoundWords(shuffled);
-    const firstWord = shuffled[0] || '';
+    const firstWord = shuffled[0] || "";
     setCurrentWord(firstWord);
-    currentWordRef.current = firstWord;
     setRoundResults([]);
     roundResultsRef.current = [];
 
@@ -79,9 +107,6 @@ export default function GamePlay({ gameState, setGameState, onRoundEnd, onGameEn
   const endRound = () => {
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
-    }
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
     }
 
     setGameState({
@@ -115,47 +140,13 @@ export default function GamePlay({ gameState, setGameState, onRoundEnd, onGameEn
 
     const nextWord = roundWords[nextIndex];
     setCurrentWord(nextWord);
-    currentWordRef.current = nextWord;
     setGameState({
       ...gameState,
       currentWordIndex: nextIndex,
     });
   };
 
-  const minSwipeDistance = 50;
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY,
-    });
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY,
-    });
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-
-    const distanceX = touchEnd.x - touchStart.x;
-    const distanceY = touchEnd.y - touchStart.y;
-    const isVerticalSwipe = Math.abs(distanceY) > Math.abs(distanceX);
-
-    if (isVerticalSwipe && Math.abs(distanceY) > minSwipeDistance) {
-      if (distanceY > 0) {
-        // Swipe down - skip
-        handleWordAction(false);
-      } else {
-        // Swipe up - guessed
-        handleWordAction(true);
-      }
-    }
-  };
+  // Swiping removed: guessed/skip via buttons only
 
   const winner = checkWinCondition(gameState);
 
@@ -163,7 +154,9 @@ export default function GamePlay({ gameState, setGameState, onRoundEnd, onGameEn
     return (
       <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-2xl w-full mx-auto text-center">
         <h1 className="text-4xl font-bold text-white mb-4">🎉 Game Over!</h1>
-        <h2 className="text-2xl font-semibold text-[#ECACAE] mb-8">{winner} Wins!</h2>
+        <h2 className="text-2xl font-semibold text-[#ECACAE] mb-8">
+          {winner} Wins!
+        </h2>
         <div className="space-y-2 mb-8">
           {Object.entries(gameState.teamScores).map(([team, score]) => (
             <div key={team} className="flex justify-between text-white text-lg">
@@ -185,18 +178,28 @@ export default function GamePlay({ gameState, setGameState, onRoundEnd, onGameEn
   if (!gameState.isRoundActive) {
     return (
       <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-2xl w-full mx-auto text-center">
-        <h1 className="text-3xl font-bold text-white mb-4">Round {gameState.currentRound}</h1>
-        <h2 className="text-2xl font-semibold text-[#ECACAE] mb-6">{currentTeam}</h2>
+        <h1 className="text-3xl font-bold text-white mb-4">
+          Round {gameState.currentRound}
+        </h1>
+        <h2 className="text-2xl font-semibold text-[#ECACAE] mb-6">
+          {currentTeam}
+        </h2>
 
         <div className="mb-6 p-4 bg-white/10 rounded-lg">
           <h3 className="text-white font-semibold mb-3">Current Scores</h3>
           <div className="space-y-2">
             {Object.entries(gameState.teamScores).map(([team, score]) => (
               <div key={team} className="flex justify-between text-white">
-                <span className={team === currentTeam ? 'font-semibold text-[#ECACAE]' : ''}>
+                <span
+                  className={
+                    team === currentTeam ? "font-semibold text-[#ECACAE]" : ""
+                  }
+                >
                   {team}
                 </span>
-                <span className="font-semibold">{score} / {gameState.settings.pointsRequired}</span>
+                <span className="font-semibold">
+                  {score} / {gameState.settings.pointsRequired}
+                </span>
               </div>
             ))}
           </div>
@@ -225,7 +228,9 @@ export default function GamePlay({ gameState, setGameState, onRoundEnd, onGameEn
           </div>
           <div className="text-white/80">
             <div className="text-sm">Time</div>
-            <div className="text-2xl font-bold text-[#ECACAE]">{currentTime || remainingTime}s</div>
+            <div className="text-2xl font-bold text-[#ECACAE]">
+              {currentTime || remainingTime}s
+            </div>
           </div>
         </div>
         <div className="text-white/60 text-sm">
@@ -233,12 +238,7 @@ export default function GamePlay({ gameState, setGameState, onRoundEnd, onGameEn
         </div>
       </div>
 
-      <div
-        className="bg-white/20 rounded-2xl p-12 min-h-[300px] flex items-center justify-center cursor-pointer select-none"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
+      <div className="bg-white/20 rounded-2xl p-12 min-h-[300px] flex items-center justify-center select-none">
         <h2 className="text-4xl md:text-5xl font-bold text-white text-center">
           {currentWord}
         </h2>
@@ -258,11 +258,6 @@ export default function GamePlay({ gameState, setGameState, onRoundEnd, onGameEn
           Guessed ✅
         </button>
       </div>
-
-      <div className="mt-6 text-center text-white/60 text-sm">
-        Swipe up for guessed, swipe down for skip
-      </div>
     </div>
   );
 }
-

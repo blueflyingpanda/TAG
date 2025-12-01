@@ -45,6 +45,11 @@ export default function ThemeSelection({
         throw new Error("Theme must have at least 100 words");
       }
 
+      // Enforce exactly 10 teams
+      if (!Array.isArray(theme.teams) || theme.teams.length !== 10) {
+        throw new Error("Theme must contain exactly 10 teams");
+      }
+
       onImportTheme(theme);
       setShowImportDialog(false);
       setImportJson("");
@@ -134,7 +139,7 @@ export default function ThemeSelection({
 
       {filteredThemes.length === 0 && (
         <p className="text-white/60 text-center py-8">
-          No themes available. Import a theme to get started.
+          No themes available. Import or Create a theme to get started.
         </p>
       )}
 

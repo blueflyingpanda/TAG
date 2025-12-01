@@ -32,10 +32,10 @@ export default function CreateTheme({
       return "Theme name must be 10 words or less";
     }
 
-    // Teams validation
+    // Teams validation - require exactly 10 teams
     const validTeams = teams.filter((t) => t.trim());
-    if (validTeams.length === 0) {
-      return "At least one team is required";
+    if (validTeams.length !== 10) {
+      return "Theme must contain exactly 10 teams";
     }
     for (const team of validTeams) {
       if (team.length > 64) {
@@ -70,6 +70,10 @@ export default function CreateTheme({
     const validationError = validateTheme();
     if (validationError) {
       setError(validationError);
+      // Bring validation error into view so user notices it
+      try {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch {}
       return;
     }
 
@@ -109,7 +113,15 @@ export default function CreateTheme({
   };
 
   const addTeam = () => {
+    const newIndex = teams.length;
     setTeams([...teams, ""]);
+    // Focus the newly added input after DOM updates
+    setTimeout(() => {
+      const el = document.getElementById(
+        `team-input-${newIndex}`
+      ) as HTMLInputElement | null;
+      el?.focus();
+    }, 0);
   };
 
   const removeTeam = (index: number) => {
@@ -202,11 +214,12 @@ export default function CreateTheme({
 
         <div>
           <label className="text-white font-semibold mb-2 block">
-            Teams * (each max 64 chars, max 10 words)
+            Teams * (exactly 10 teams, each max 64 chars, max 10 words)
           </label>
           {teams.map((team, index) => (
             <div key={index} className="flex gap-2 mb-2">
               <input
+                id={`team-input-${index}`}
                 type="text"
                 value={team}
                 onChange={(e) => updateTeam(index, e.target.value)}
@@ -224,12 +237,24 @@ export default function CreateTheme({
               )}
             </div>
           ))}
-          <button
-            onClick={addTeam}
-            className="mt-2 px-4 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
-          >
-            + Add Team
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={addTeam}
+              className="mt-2 px-4 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50"
+              disabled={teams.length >= 10}
+            >
+              + Add Team
+            </button>
+            <span className="text-white/60 text-sm">
+              {teams.filter((t) => t.trim()).length} filled • {teams.length}{" "}
+              entries • 10 required
+            </span>
+          </div>
+          {teams.filter((t) => t.trim()).length !== 10 && (
+            <p className="text-yellow-300 text-sm mt-2">
+              You must provide exactly 10 filled team names to create a theme.
+            </p>
+          )}
         </div>
 
         <div>

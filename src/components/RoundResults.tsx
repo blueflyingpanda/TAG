@@ -3,12 +3,14 @@ import { useEffect, useState } from "react";
 interface RoundResultsProps {
   results: { word: string; guessed: boolean }[];
   onConfirm: (results: { word: string; guessed: boolean }[]) => void;
+  skipPenalty?: boolean;
   onBack: () => void;
 }
 
 export default function RoundResults({
   results,
   onConfirm,
+  skipPenalty = true,
   onBack,
 }: RoundResultsProps) {
   const [finalResults, setFinalResults] = useState(results);
@@ -24,7 +26,7 @@ export default function RoundResults({
 
   const guessedCount = finalResults.filter((r) => r.guessed).length;
   const skippedCount = finalResults.length - guessedCount;
-  const earned = guessedCount - skippedCount;
+  const earned = skipPenalty ? guessedCount - skippedCount : guessedCount;
   const [pulse, setPulse] = useState(false);
 
   useEffect(() => {

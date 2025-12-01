@@ -1,4 +1,4 @@
-import type { Theme, GameState } from '../types';
+import type { GameState, Theme } from '../types';
 
 const THEMES_STORAGE_KEY = 'tag_themes';
 const GAME_STATE_STORAGE_KEY = 'tag_game_state';
@@ -16,6 +16,10 @@ export const storage = {
   },
 
   saveTheme: (theme: Theme): void => {
+    // Ensure theme has exactly 10 teams before saving
+    if (!Array.isArray(theme.teams) || theme.teams.length !== 10) {
+      throw new Error('Theme must contain exactly 10 teams');
+    }
     const themes = storage.getThemes();
     const existingIndex = themes.findIndex(
       (t) => t.name === theme.name && t.lang === theme.lang
