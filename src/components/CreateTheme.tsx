@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Theme, User } from "../types";
-import { storage } from "../utils/storage";
+import { createTheme } from "../utils/themes";
 
 interface CreateThemeProps {
   user: User;
@@ -15,6 +15,7 @@ export default function CreateTheme({
 }: CreateThemeProps) {
   const [lang, setLang] = useState("en");
   const [name, setName] = useState("");
+  const [difficulty, setDifficulty] = useState(3);
   const [teams, setTeams] = useState<string[]>([""]);
   const [words, setWords] = useState<string[]>([""]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,17 +34,17 @@ export default function CreateTheme({
       return "Theme name must be 10 words or less";
     }
 
-    // Name uniqueness: same name+lang should not already exist
-    const existing = storage
-      .getThemes()
-      .find(
-        (t) =>
-          t.lang === lang &&
-          t.name.trim().toLowerCase() === name.trim().toLowerCase()
-      );
-    if (existing) {
-      return "A theme with this name and language already exists";
-    }
+    // Name uniqueness will be checked by the API
+    // const existing = storage
+    //   .getThemes()
+    //   .find(
+    //     (t) =>
+    //       t.language === lang &&
+    //       t.name.trim().toLowerCase() === name.trim().toLowerCase()
+    //   );
+    // if (existing) {
+    //   return "A theme with this name and language already exists";
+    // }
 
     // Teams validation - require exactly 10 teams
     const validTeams = teams.filter((t) => t.trim());
@@ -51,9 +52,21 @@ export default function CreateTheme({
       return "Theme must contain exactly 10 teams";
     }
     // Ensure team names are unique (case-insensitive)
-    const teamNameSet = new Set(validTeams.map((t) => t.trim().toLowerCase()));
-    if (teamNameSet.size !== validTeams.length) {
-      return "Team names must be unique";
+    const teamNameMap = new Map<string, string[]>();
+    for (const team of validTeams) {
+      const lower = team.trim().toLowerCase();
+      if (!teamNameMap.has(lower)) {
+        teamNameMap.set(lower, []);
+      }
+      teamNameMap.get(lower)!.push(team.trim());
+    }
+    const duplicateTeams = Array.from(teamNameMap.entries())
+      .filter(([, originals]) => originals.length > 1)
+      .map(([_lower, originals]) => `"${originals[0]}"`);
+    if (duplicateTeams.length > 0) {
+      return `Team names must be unique. Duplicates found: ${duplicateTeams.join(
+        ", "
+      )}`;
     }
     for (const team of validTeams) {
       if (team.length > 64) {
@@ -71,9 +84,21 @@ export default function CreateTheme({
       return "Theme must have at least 100 words";
     }
     // Ensure words are unique (case-insensitive)
-    const wordSet = new Set(validWords.map((w) => w.trim().toLowerCase()));
-    if (wordSet.size !== validWords.length) {
-      return "Words must be unique within a theme";
+    const wordMap = new Map<string, string[]>();
+    for (const word of validWords) {
+      const lower = word.trim().toLowerCase();
+      if (!wordMap.has(lower)) {
+        wordMap.set(lower, []);
+      }
+      wordMap.get(lower)!.push(word.trim());
+    }
+    const duplicateWords = Array.from(wordMap.entries())
+      .filter(([, originals]) => originals.length > 1)
+      .map(([_lower, originals]) => `"${originals[0]}"`);
+    if (duplicateWords.length > 0) {
+      return `Words must be unique within a theme. Duplicates found: ${duplicateWords.join(
+        ", "
+      )}`;
     }
     for (const word of validWords) {
       if (word.length > 64) {
@@ -102,29 +127,21 @@ export default function CreateTheme({
 
     setIsSubmitting(true);
 
-    const theme: Theme = {
-      lang,
+    const themePayload = {
       name: name.trim(),
-      teams: teams.filter((t) => t.trim()).map((t) => t.trim()),
-      words: words.filter((w) => w.trim()).map((w) => w.trim()),
+      language: lang,
+      difficulty,
+      description: {
+        words: words.filter((w) => w.trim()).map((w) => w.trim()),
+        teams: teams.filter((t) => t.trim()).map((t) => t.trim()),
+      },
     };
 
     try {
-      // TODO: Replace with actual API call when backend is ready
-      // const response = await fetch('/api/themes', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(theme),
-      // });
-      // if (!response.ok) throw new Error('Failed to create theme');
-
-      // For now, simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      console.log("Theme created (would be sent to backend):", theme);
+      const createdTheme = await createTheme(themePayload);
 
       if (onThemeCreated) {
-        onThemeCreated(theme);
+        onThemeCreated(createdTheme);
       }
 
       onBack();
@@ -208,6 +225,23 @@ export default function CreateTheme({
           >
             <option value="en">English</option>
             <option value="ru">Russian</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-white font-semibold mb-2 block">
+            Difficulty *
+          </label>
+          <select
+            value={difficulty}
+            onChange={(e) => setDifficulty(parseInt(e.target.value))}
+            className="w-full px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
+          >
+            <option value={1}>1 - Very Easy</option>
+            <option value={2}>2 - Easy</option>
+            <option value={3}>3 - Medium</option>
+            <option value={4}>4 - Hard</option>
+            <option value={5}>5 - Very Hard</option>
           </select>
         </div>
 

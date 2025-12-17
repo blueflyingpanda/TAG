@@ -354,10 +354,6 @@ function App() {
           <ThemeSelection
             user={user}
             onThemeSelect={handleThemeSelect}
-            onImportTheme={(theme) => {
-              storage.saveTheme(theme);
-              handleThemeSelect(theme);
-            }}
             onCreateTheme={() => setScreen("create-theme")}
           />
         )}

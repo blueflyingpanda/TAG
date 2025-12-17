@@ -1,8 +1,44 @@
 export interface Theme {
-  lang: string; // ISO 639 alpha-2
+  id: number;
   name: string;
-  teams: string[];
-  words: string[];
+  language: string; // ISO 639 alpha-2
+  difficulty: number; // 1-5
+  description: {
+    words: string[];
+    teams: string[];
+  };
+  played_count?: number;
+  last_played?: string | null;
+  creator?: {
+    email: string;
+    picture?: string;
+    admin?: boolean;
+  };
+}
+
+export interface ThemeListItem {
+  id: number;
+  name: string;
+  language: string;
+  difficulty: number;
+}
+
+export interface ThemePayload {
+  name: string;
+  language?: string;
+  difficulty?: number;
+  description: {
+    words: string[];
+    teams: string[];
+  };
+}
+
+export interface PaginatedThemes {
+  items: ThemeListItem[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
 }
 
 export interface GameSettings {

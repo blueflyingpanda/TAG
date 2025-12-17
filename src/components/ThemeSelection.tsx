@@ -1,95 +1,133 @@
 import { useEffect, useState } from "react";
-import type { Theme, User } from "../types";
-import { storage } from "../utils/storage";
+import type { Theme, ThemeListItem, User } from "../types";
+import { createTheme, getTheme, getThemes } from "../utils/themes";
 
 interface ThemeSelectionProps {
   user: User | null;
   onThemeSelect: (theme: Theme) => void;
-  onImportTheme: (theme: Theme) => void;
   onCreateTheme?: () => void;
 }
 
 export default function ThemeSelection({
   user,
   onThemeSelect,
-  onImportTheme,
   onCreateTheme,
 }: ThemeSelectionProps) {
-  const [themes, setThemes] = useState<Theme[]>([]);
+  const [themes, setThemes] = useState<ThemeListItem[]>([]);
   const [selectedLang, setSelectedLang] = useState("en");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<
+    number | undefined
+  >(undefined);
   const [showUnverified, setShowUnverified] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [importJson, setImportJson] = useState("");
   const [importError, setImportError] = useState("");
 
+  const fetchThemes = async () => {
+    try {
+      const response = await getThemes(
+        1,
+        50,
+        selectedLang,
+        selectedDifficulty,
+        searchTerm || undefined
+      );
+      setThemes(response.items);
+    } catch (err) {
+      console.error("Failed to fetch themes:", err);
+    }
+  };
+
   useEffect(() => {
-    const localThemes = storage.getThemes();
-    setThemes(localThemes);
+    fetchThemes();
   }, []);
 
-  const handleImport = () => {
+  const handleThemeSelect = async (themeItem: ThemeListItem) => {
     try {
-      const theme: Theme = JSON.parse(importJson);
+      const fullTheme = await getTheme(themeItem.id);
+      onThemeSelect(fullTheme);
+    } catch (err) {
+      console.error("Failed to load theme details:", err);
+    }
+  };
 
-      // Basic validation
+  const handleImport = async () => {
+    try {
+      // Parse the API format theme
+      const themeData = JSON.parse(importJson);
+
+      // Basic validation for API format
       if (
-        !theme.lang ||
-        !theme.name ||
-        !Array.isArray(theme.teams) ||
-        !Array.isArray(theme.words)
+        !themeData.name ||
+        !themeData.language ||
+        typeof themeData.difficulty !== "number" ||
+        !themeData.description ||
+        !Array.isArray(themeData.description.teams) ||
+        !Array.isArray(themeData.description.words)
       ) {
-        throw new Error("Invalid theme format");
+        throw new Error(
+          "Invalid theme format. Expected API format with name, language, difficulty, and description object"
+        );
       }
 
-      if (theme.words.length < 100) {
+      if (themeData.description.words.length < 100) {
         throw new Error("Theme must have at least 100 words");
       }
 
-      // Prevent importing a theme with duplicate name+lang
-      const existing = storage
-        .getThemes()
-        .find(
-          (t) =>
-            t.lang === theme.lang &&
-            t.name.trim().toLowerCase() === theme.name.trim().toLowerCase()
-        );
-      if (existing) {
-        throw new Error("A theme with this name and language already exists");
-      }
-
       // Enforce exactly 10 teams
-      if (!Array.isArray(theme.teams) || theme.teams.length !== 10) {
+      if (themeData.description.teams.length !== 10) {
         throw new Error("Theme must contain exactly 10 teams");
       }
 
       // Ensure team names are unique
-      const teamNames = theme.teams.map((t) => String(t).trim().toLowerCase());
+      const teamNames = themeData.description.teams.map((t: any) =>
+        String(t).trim().toLowerCase()
+      );
       const uniqueTeamNames = new Set(teamNames);
       if (uniqueTeamNames.size !== teamNames.length) {
-        throw new Error("Team names must be unique");
+        const duplicates = themeData.description.teams.filter(
+          (t: any, index: number) =>
+            teamNames.indexOf(String(t).trim().toLowerCase()) !== index
+        );
+        throw new Error(
+          `Team names must be unique. Duplicates found: ${duplicates
+            .map((t: any) => `"${t}"`)
+            .join(", ")}`
+        );
       }
 
       // Ensure words are unique
-      const wordValues = theme.words.map((w) => String(w).trim().toLowerCase());
+      const wordValues = themeData.description.words.map((w: any) =>
+        String(w).trim().toLowerCase()
+      );
       const uniqueWords = new Set(wordValues);
       if (uniqueWords.size !== wordValues.length) {
-        throw new Error("Words must be unique within a theme");
+        const duplicates = themeData.description.words.filter(
+          (w: any, index: number) =>
+            wordValues.indexOf(String(w).trim().toLowerCase()) !== index
+        );
+        throw new Error(
+          `Words must be unique within a theme. Duplicates found: ${duplicates
+            .slice(0, 5)
+            .map((w: any) => `"${w}"`)
+            .join(", ")}${duplicates.length > 5 ? "..." : ""}`
+        );
       }
 
-      onImportTheme(theme);
+      // Create theme via API
+      await createTheme(themeData);
+
       setShowImportDialog(false);
       setImportJson("");
       setImportError("");
+
+      // Optionally refresh the theme list
+      fetchThemes();
     } catch (error) {
       setImportError(error instanceof Error ? error.message : "Invalid JSON");
     }
   };
-
-  const filteredThemes = themes.filter((theme) => {
-    if (theme.lang !== selectedLang) return false;
-    // TODO: Filter by verified/public when backend is ready
-    return true;
-  });
 
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-4xl w-full mx-auto">
@@ -108,6 +146,45 @@ export default function ThemeSelection({
             <option value="en">English</option>
             <option value="ru">Russian</option>
           </select>
+        </div>
+
+        <div>
+          <label className="text-white/80 mb-2 block">Difficulty</label>
+          <select
+            value={selectedDifficulty || ""}
+            onChange={(e) =>
+              setSelectedDifficulty(
+                e.target.value ? parseInt(e.target.value) : undefined
+              )
+            }
+            className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
+          >
+            <option value="">All</option>
+            <option value="1">1 - Very Easy</option>
+            <option value="2">2 - Easy</option>
+            <option value="3">3 - Medium</option>
+            <option value="4">4 - Hard</option>
+            <option value="5">5 - Very Hard</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-white/80 mb-2 block">Search</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search themes..."
+              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] placeholder-white/50"
+            />
+            <button
+              onClick={fetchThemes}
+              className="px-4 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+            >
+              Search
+            </button>
+          </div>
         </div>
 
         {user && (
@@ -149,21 +226,21 @@ export default function ThemeSelection({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredThemes.map((theme, index) => (
+        {themes.map((theme) => (
           <button
-            key={index}
-            onClick={() => onThemeSelect(theme)}
+            key={theme.id}
+            onClick={() => handleThemeSelect(theme)}
             className="p-4 bg-white/10 rounded-lg hover:bg-white/20 transition text-left"
           >
             <h3 className="text-white font-semibold mb-2">{theme.name}</h3>
             <p className="text-white/60 text-sm">
-              {theme.words.length} words • {theme.teams.length} teams
+              Difficulty: {theme.difficulty}
             </p>
           </button>
         ))}
       </div>
 
-      {filteredThemes.length === 0 && (
+      {themes.length === 0 && (
         <p className="text-white/60 text-center py-8">
           No themes available. Import or Create a theme to get started.
         </p>
@@ -179,8 +256,30 @@ export default function ThemeSelection({
                 setImportJson(e.target.value);
                 setImportError("");
               }}
-              placeholder="Paste theme JSON here..."
-              className="w-full h-64 p-4 bg-white/10 text-white rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
+              placeholder={`Paste theme JSON here...
+
+Example format:
+{
+  "name": "Harry Potter",
+  "language": "en",
+  "difficulty": 3,
+  "description": {
+    "teams": [
+      "Gryffindor",
+      "Dumbledore's Army",
+      "Order of the Phoenix",
+      ...
+    ],
+    "words": [
+      "Tom Marvolo Riddle",
+      "Alohomora",
+      "Elder Wand",
+      "Deluminator",
+      ...
+    ]
+  }
+}`}
+              className="w-full h-64 p-4 bg-white/10 text-white rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#ECACAE] placeholder-white/60"
             />
             {importError && (
               <p className="text-red-400 mt-2 text-sm">{importError}</p>

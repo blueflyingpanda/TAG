@@ -9,8 +9,8 @@ interface GameSetupProps {
 
 export default function GameSetup({ theme, onStart, onBack }: GameSetupProps) {
   const [selectedTeams, setSelectedTeams] = useState<string[]>([
-    theme.teams[0],
-    theme.teams[1] || theme.teams[0],
+    theme.description.teams[0],
+    theme.description.teams[1] || theme.description.teams[0],
   ]);
   const [pointsRequired, setPointsRequired] = useState(50);
   const [roundTimer, setRoundTimer] = useState(60);
@@ -46,7 +46,8 @@ export default function GameSetup({ theme, onStart, onBack }: GameSetupProps) {
         {theme.name}
       </h1>
       <p className="text-white/60 mb-6 text-center">
-        {theme.words.length} words • {theme.teams.length} teams available
+        {theme.description.words.length} words •{" "}
+        {theme.description.teams.length} teams available
       </p>
 
       <div className="space-y-6">
@@ -55,7 +56,7 @@ export default function GameSetup({ theme, onStart, onBack }: GameSetupProps) {
             Select Teams
           </label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {theme.teams.map((team) => (
+            {theme.description.teams.map((team) => (
               <button
                 key={team}
                 onClick={() => toggleTeam(team)}
@@ -70,7 +71,7 @@ export default function GameSetup({ theme, onStart, onBack }: GameSetupProps) {
             ))}
           </div>
           <p className="text-white/60 text-sm mt-2">
-            Selected: {selectedTeams.length} / {theme.teams.length}
+            Selected: {selectedTeams.length} / {theme.description.teams.length}
           </p>
         </div>
 

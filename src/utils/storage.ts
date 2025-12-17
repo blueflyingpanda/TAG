@@ -17,22 +17,22 @@ export const storage = {
 
   saveTheme: (theme: Theme): void => {
     // Ensure theme has exactly 10 teams before saving
-    if (!Array.isArray(theme.teams) || theme.teams.length !== 10) {
+    if (!Array.isArray(theme.description.teams) || theme.description.teams.length !== 10) {
       throw new Error('Theme must contain exactly 10 teams');
     }
     // Ensure team names are unique
-    const teamNames = theme.teams.map((t) => String(t).trim().toLowerCase());
+    const teamNames = theme.description.teams.map((t) => String(t).trim().toLowerCase());
     if (new Set(teamNames).size !== teamNames.length) {
       throw new Error('Team names must be unique');
     }
     // Ensure words are unique
-    const wordValues = theme.words.map((w) => String(w).trim().toLowerCase());
+    const wordValues = theme.description.words.map((w) => String(w).trim().toLowerCase());
     if (new Set(wordValues).size !== wordValues.length) {
       throw new Error('Words must be unique within a theme');
     }
     const themes = storage.getThemes();
     const existingIndex = themes.findIndex(
-      (t) => t.name === theme.name && t.lang === theme.lang
+      (t) => t.name === theme.name && t.language === theme.language
     );
     if (existingIndex >= 0) {
       themes[existingIndex] = theme;

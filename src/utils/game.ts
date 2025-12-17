@@ -1,7 +1,7 @@
-import type { Theme, GameSettings, GameState } from '../types';
+import type { GameSettings, GameState, Theme } from '../types';
 
 export const getAvailableWords = (theme: Theme, wordsUsed: string[]): string[] => {
-  return theme.words.filter((word) => !wordsUsed.includes(word));
+  return theme.description.words.filter((word) => !wordsUsed.includes(word));
 };
 
 export const shuffleArray = <T>(array: T[]): T[] => {
