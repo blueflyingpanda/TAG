@@ -531,7 +531,6 @@ function App() {
             results={gameState.roundResults}
             skipPenalty={Boolean(gameState.settings.skipPenalty)}
             onConfirm={handleRoundResultsConfirm}
-            onBack={() => setScreen("game-play")}
           />
         )}
         {screen === "game-history" && user && (

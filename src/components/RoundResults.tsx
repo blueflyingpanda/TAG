@@ -4,14 +4,12 @@ interface RoundResultsProps {
   results: { word: string; guessed: boolean }[];
   onConfirm: (results: { word: string; guessed: boolean }[]) => void;
   skipPenalty?: boolean;
-  onBack: () => void;
 }
 
 export default function RoundResults({
   results,
   onConfirm,
   skipPenalty = true,
-  onBack,
 }: RoundResultsProps) {
   const [finalResults, setFinalResults] = useState(results);
 
@@ -102,16 +100,10 @@ export default function RoundResults({
         ))}
       </div>
 
-      <div className="flex gap-4">
-        <button
-          onClick={onBack}
-          className="flex-1 px-6 py-3 bg-white/20 text-white rounded-lg font-semibold hover:opacity-90 transition"
-        >
-          Back
-        </button>
+      <div className="flex justify-center">
         <button
           onClick={() => onConfirm(finalResults)}
-          className="flex-1 px-6 py-3 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+          className="px-6 py-3 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
         >
           Confirm
         </button>
