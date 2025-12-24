@@ -12,6 +12,7 @@ interface GamePlayProps {
   setGameState: (state: GameState) => void;
   onRoundEnd: (results: { word: string; guessed: boolean }[]) => void;
   onGameEnd: () => void;
+  onRoundStart?: (gameState: GameState) => void;
 }
 
 export default function GamePlay({
@@ -19,6 +20,7 @@ export default function GamePlay({
   setGameState,
   onRoundEnd,
   onGameEnd,
+  onRoundStart,
 }: GamePlayProps) {
   const [currentWord, setCurrentWord] = useState<string>("");
   const [roundWords, setRoundWords] = useState<string[]>([]);
@@ -102,6 +104,16 @@ export default function GamePlay({
       roundStartTime: Date.now(),
       currentWordIndex: 0,
     });
+
+    // Notify parent component about round start for API updates
+    if (onRoundStart) {
+      onRoundStart({
+        ...gameState,
+        isRoundActive: true,
+        roundStartTime: Date.now(),
+        currentWordIndex: 0,
+      });
+    }
   };
 
   const endRound = () => {

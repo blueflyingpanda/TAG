@@ -9,6 +9,7 @@ import ThemeDetails from "./components/ThemeDetails";
 import ThemeSelection from "./components/ThemeSelection";
 import type { GameSettings, GameState, Theme, User } from "./types";
 import { checkWinCondition, initializeGameState } from "./utils/game";
+import { createGame, updateGame } from "./utils/games";
 import {
   clearOAuthCallback,
   clearStoredToken,
@@ -52,8 +53,51 @@ function App() {
     return saved || null;
   });
 
-  // Hide header buttons while a game is in progress (until the game is finished)
-  const hideHeaderButtons = screen === "game-play" && gameState !== null;
+  // Hide header buttons during round results confirmation and active rounds, but show before rounds start
+  const hideHeaderButtons =
+    screen === "round-results" ||
+    (screen === "game-play" && gameState?.isRoundActive);
+
+  // Helper function to update game via API
+  const updateGameViaAPI = async (gameState: GameState) => {
+    try {
+      const gameId = localStorage.getItem("tag_current_game_id");
+      if (!gameId) return;
+
+      const gameIdNum = parseInt(gameId);
+      if (isNaN(gameIdNum)) return; // Skip for local games
+
+      // Convert round results to words_guessed and words_skipped arrays
+      const wordsGuessed: string[] = [];
+      const wordsSkipped: string[] = [];
+
+      gameState.roundResults.forEach((result) => {
+        if (result.guessed) {
+          wordsGuessed.push(result.word);
+        } else {
+          wordsSkipped.push(result.word);
+        }
+      });
+
+      const updateData = {
+        info: {
+          teams: Object.entries(gameState.teamScores).map(([name, score]) => ({
+            name,
+            score,
+          })),
+          current_team_index: gameState.currentTeamIndex,
+          current_round: gameState.currentRound,
+        },
+        words_guessed: wordsGuessed,
+        words_skipped: wordsSkipped,
+      };
+
+      await updateGame(gameIdNum, updateData);
+    } catch (error) {
+      console.error("Failed to update game via API:", error);
+      // Don't block gameplay if API update fails
+    }
+  };
 
   useEffect(() => {
     // Handle OAuth callback from backend redirect
@@ -148,7 +192,10 @@ function App() {
   const handleLogout = () => {
     clearStoredToken();
     storage.clearUser();
+    storage.clearGameState();
+    localStorage.removeItem("tag_current_game_id");
     setUser(null);
+    setGameState(null);
     setScreen("login");
   };
 
@@ -157,22 +204,60 @@ function App() {
     setScreen("game-setup");
   };
 
-  const handleGameStart = (settings: GameSettings) => {
-    const newGameId = `game_${Date.now()}_${Math.random()
-      .toString(36)
-      .substr(2, 9)}`;
-    setGameId(newGameId);
-    localStorage.setItem("tag_current_game_id", newGameId);
+  const handleGameStart = async (settings: GameSettings) => {
+    try {
+      // Create game via API with correct payload structure
+      const gameData = {
+        theme_id: settings.theme.id,
+        started_at: new Date().toISOString(),
+        ended_at: null,
+        points: settings.pointsRequired,
+        round: settings.roundTimer,
+        skip_penalty: settings.skipPenalty,
+        info: {
+          teams: settings.selectedTeams.map((team) => ({
+            name: team,
+            score: 0,
+          })),
+          current_team_index: 0,
+          current_round: 0,
+        },
+      };
 
-    // Ensure round timer respects minimum (15s) and coerce skipPenalty to boolean
-    const safeSettings = {
-      ...settings,
-      roundTimer: Math.max(settings.roundTimer, 15),
-      skipPenalty: !!settings.skipPenalty,
-    };
-    const newGameState = initializeGameState(safeSettings);
-    setGameState(newGameState);
-    setScreen("game-play");
+      const createdGame = await createGame(gameData);
+
+      // Use API game ID
+      const gameId = createdGame.id.toString();
+      setGameId(gameId);
+      localStorage.setItem("tag_current_game_id", gameId);
+
+      // Ensure round timer respects minimum (15s) and coerce skipPenalty to boolean
+      const safeSettings = {
+        ...settings,
+        roundTimer: Math.max(settings.roundTimer, 15),
+        skipPenalty: !!settings.skipPenalty,
+      };
+      const newGameState = initializeGameState(safeSettings);
+      setGameState(newGameState);
+      setScreen("game-play");
+    } catch (error) {
+      console.error("Failed to create game:", error);
+      // Fallback to local game creation if API fails
+      const newGameId = `local_game_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+      setGameId(newGameId);
+      localStorage.setItem("tag_current_game_id", newGameId);
+
+      const safeSettings = {
+        ...settings,
+        roundTimer: Math.max(settings.roundTimer, 15),
+        skipPenalty: !!settings.skipPenalty,
+      };
+      const newGameState = initializeGameState(safeSettings);
+      setGameState(newGameState);
+      setScreen("game-play");
+    }
   };
 
   const handleRoundEnd = (results: { word: string; guessed: boolean }[]) => {
@@ -202,6 +287,7 @@ function App() {
       updatedState.currentWordIndex = 0;
 
       setGameState(updatedState);
+      updateGameViaAPI(updatedState);
       setScreen("game-play");
       return;
     }
@@ -235,6 +321,10 @@ function App() {
     updatedState.teamScores[currentTeam] += scoreChange;
     updatedState.wordsUsed.push(...finalResults.map((r) => r.word));
 
+    // Update game via API with the round results BEFORE clearing them
+    const tempStateForAPI = { ...updatedState, roundResults: finalResults };
+    updateGameViaAPI(tempStateForAPI);
+
     // Check if win condition is reached after updating score
     const winner = checkWinCondition(updatedState);
 
@@ -265,23 +355,47 @@ function App() {
     setScreen("game-play");
   };
 
-  const handleGameEnd = () => {
-    // TODO: Save completed game to backend via API when backend is ready
-    // if (gameState && gameId) {
-    //   const winner = checkWinCondition(gameState);
-    //   await fetch('/api/games', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       themeName: gameState.settings.theme.name,
-    //       themeLang: gameState.settings.theme.lang,
-    //       teams: gameState.settings.selectedTeams,
-    //       finalScores: gameState.teamScores,
-    //       pointsRequired: gameState.settings.pointsRequired,
-    //       winner: winner,
-    //     }),
-    //   });
-    // }
+  const handleGameEnd = async () => {
+    if (gameState) {
+      // Mark game as ended via API
+      try {
+        const gameId = localStorage.getItem("tag_current_game_id");
+        if (gameId && !isNaN(parseInt(gameId))) {
+          // Convert final team scores to the expected format
+          const teams = Object.entries(gameState.teamScores).map(
+            ([name, score]) => ({
+              name,
+              score,
+            })
+          );
+
+          // Convert round results to words_guessed and words_skipped
+          const wordsGuessed: string[] = [];
+          const wordsSkipped: string[] = [];
+
+          gameState.roundResults.forEach((result) => {
+            if (result.guessed) {
+              wordsGuessed.push(result.word);
+            } else {
+              wordsSkipped.push(result.word);
+            }
+          });
+
+          await updateGame(parseInt(gameId), {
+            info: {
+              teams,
+              current_team_index: gameState.currentTeamIndex,
+              current_round: gameState.currentRound,
+            },
+            words_guessed: wordsGuessed,
+            words_skipped: wordsSkipped,
+            ended_at: new Date().toISOString(),
+          });
+        }
+      } catch (error) {
+        console.error("Failed to end game via API:", error);
+      }
+    }
 
     storage.clearGameState();
     localStorage.removeItem("tag_current_game_id");
@@ -409,6 +523,7 @@ function App() {
             setGameState={setGameState}
             onRoundEnd={handleRoundEnd}
             onGameEnd={handleGameEnd}
+            onRoundStart={updateGameViaAPI}
           />
         )}
         {screen === "round-results" && user && gameState && (
@@ -422,12 +537,9 @@ function App() {
         {screen === "game-history" && user && (
           <GameHistory
             onBack={() => setScreen("theme-selection")}
-            onResumeGame={(gameState) => {
-              const newGameId = `game_${Date.now()}_${Math.random()
-                .toString(36)
-                .substr(2, 9)}`;
-              setGameId(newGameId);
-              localStorage.setItem("tag_current_game_id", newGameId);
+            onResumeGame={(gameState, gameId) => {
+              setGameId(gameId.toString());
+              localStorage.setItem("tag_current_game_id", gameId.toString());
               setGameState(gameState);
               setScreen("game-play");
             }}

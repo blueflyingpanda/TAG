@@ -96,16 +96,85 @@ export interface User {
   admin: boolean;
 }
 
-export interface GameHistoryEntry {
-  id: string;
-  createdAt: number;
-  endedAt: number | null;
-  themeName: string;
-  themeLang: string;
-  teams: string[];
-  finalScores: Record<string, number>;
-  pointsRequired: number;
-  winner: string | null;
-  gameState: GameState | null; // null if game is completed, otherwise contains state to resume
+export const GameOrderBy = {
+  ID: 'id',
+} as const;
+
+export type GameOrderByType = typeof GameOrderBy[keyof typeof GameOrderBy];
+
+export interface GameListItem {
+  id: number;
+  theme_id: number;
+  started_at: string;
+  ended_at: string | null;
+  points: number;
+  round: number;
+  skip_penalty: boolean;
+  theme: {
+    name: string;
+    language: string;
+    difficulty: number;
+    verified: boolean;
+  };
+}
+
+export interface GameDetailsResponse {
+  id: number;
+  theme_id: number;
+  started_at: string;
+  ended_at: string | null;
+  points: number;
+  round: number;
+  skip_penalty: boolean;
+  info: {
+    teams: {
+      name: string;
+      score: number;
+    }[];
+    current_team_index?: number;
+    current_round?: number;
+  };
+  words_guessed: string[];
+  words_skipped: string[];
+  theme: Theme;
+}
+
+export interface GameCreatePayload {
+  theme_id: number;
+  started_at: string;
+  ended_at: string | null;
+  points: number;
+  round: number;
+  skip_penalty: boolean;
+  info: {
+    teams: {
+      name: string;
+      score: number;
+    }[];
+    current_team_index: number;
+    current_round: number;
+  };
+}
+
+export interface GameUpdatePayload {
+  info: {
+    teams: {
+      name: string;
+      score: number;
+    }[];
+    current_team_index: number;
+    current_round: number;
+  };
+  words_guessed: string[];
+  words_skipped: string[];
+  ended_at?: string | null;
+}
+
+export interface PaginatedGames {
+  items: GameListItem[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
 }
 
