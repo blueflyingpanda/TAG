@@ -22,7 +22,7 @@ export default function GamePlay({
   onRoundEnd,
   onGameEnd,
 }: GamePlayProps) {
-  const [currentWord, setCurrentWord] = useState<string>("");
+  const [currentWord, setCurrentWord] = useState("");
   const [roundWords, setRoundWords] = useState<string[]>([]);
   const [roundResults, setRoundResults] = useState<
     { word: string; guessed: boolean }[]
@@ -30,19 +30,23 @@ export default function GamePlay({
   const [currentTime, setCurrentTime] = useState(0);
   const timerIntervalRef = useRef<number | null>(null);
   const roundResultsRef = useRef<{ word: string; guessed: boolean }[]>([]);
-
   const [roundEndedByTimeout, setRoundEndedByTimeout] = useState(false);
 
   // Animation states
   const [cardExitX, setCardExitX] = useState(0);
   const [isCardExiting, setIsCardExiting] = useState(false);
-  const [nextWord, setNextWord] = useState<string>("");
+  const [nextWord, setNextWord] = useState("");
+
+  // Cheating detection
+  const [cheatingDetected, setCheatingDetected] = useState(false);
+  const roundStartTimeRef = useRef<number | null>(null);
 
   const availableWords = getAvailableWords(
     gameState.settings.theme,
     gameState.wordsUsed
   );
   const currentTeam = getCurrentTeam(gameState);
+
   const remainingTime =
     gameState.isRoundActive && gameState.roundStartTime
       ? Math.max(
@@ -114,6 +118,7 @@ export default function GamePlay({
         // Don't call onGameEnd - let the winner display handle it
         return;
       }
+
       // No teams (shouldn't happen) - end the game
       onGameEnd();
       return;
@@ -125,6 +130,8 @@ export default function GamePlay({
     setCurrentWord(firstWord);
     setRoundResults([]);
     roundResultsRef.current = [];
+    setCheatingDetected(false);
+    roundStartTimeRef.current = Date.now();
 
     setGameState({
       ...gameState,
@@ -132,8 +139,6 @@ export default function GamePlay({
       roundStartTime: Date.now(),
       currentWordIndex: 0,
     });
-
-    // Round start doesn't need API call - only results confirmation does
   };
 
   const endRound = (timedOut = false) => {
@@ -145,12 +150,15 @@ export default function GamePlay({
     const roundEndResults = [...roundResultsRef.current];
 
     setRoundEndedByTimeout(timedOut);
-
     setGameState({
       ...gameState,
       isRoundActive: false,
       roundEndTime: Date.now(),
     });
+
+    // Reset cheating detection for next round
+    setCheatingDetected(false);
+    roundStartTimeRef.current = null;
 
     // Get the latest results - don't count the last word if timer ended
     setTimeout(() => {
@@ -159,8 +167,19 @@ export default function GamePlay({
     }, 100);
   };
 
+  const checkForCheating = (guessedWordsCount: number): boolean => {
+    if (!roundStartTimeRef.current) return false;
+
+    const elapsedSeconds = Math.floor(
+      (Date.now() - roundStartTimeRef.current) / 1000
+    );
+
+    // Cheating if guessed words exceed elapsed seconds
+    return guessedWordsCount > elapsedSeconds;
+  };
+
   const handleWordAction = (guessed: boolean) => {
-    if (!currentWord || isCardExiting) return;
+    if (!currentWord || isCardExiting || cheatingDetected) return;
 
     // Set animation direction based on action
     setIsCardExiting(true);
@@ -172,7 +191,21 @@ export default function GamePlay({
       setRoundResults(newResults);
       roundResultsRef.current = newResults;
 
+      // Check for cheating after adding the new result
+      const guessedCount = newResults.filter((r) => r.guessed).length;
+      const isCheating = checkForCheating(guessedCount);
+
+      if (isCheating) {
+        setCheatingDetected(true);
+        setIsCardExiting(false);
+        setCardExitX(0);
+        setCurrentWord("");
+        setNextWord("");
+        return;
+      }
+
       const nextIndex = gameState.currentWordIndex + 1;
+
       if (nextIndex >= roundWords.length) {
         // No more words - end round
         setIsCardExiting(false);
@@ -184,6 +217,7 @@ export default function GamePlay({
       const nextWordValue = roundWords[nextIndex];
       setNextWord(nextWordValue);
       setCurrentWord(nextWordValue);
+
       setGameState({
         ...gameState,
         currentWordIndex: nextIndex,
@@ -215,193 +249,262 @@ export default function GamePlay({
 
   if (winners.length > 0) {
     return (
-      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-2xl w-full mx-auto text-center">
-        <h1 className="text-4xl font-bold text-white mb-4">🎉 Game Over!</h1>
-        <h2 className="text-2xl font-semibold text-[#ECACAE] mb-8">
-          {winners.length === 1
-            ? `${winners[0]} Wins!`
-            : `${winners.join(" & ")} Win!`}
-        </h2>
-        <div className="space-y-2 mb-8">
-          {Object.entries(gameState.teamScores).map(([team, score]) => (
-            <div key={team} className="flex justify-between text-white text-lg">
-              <span>{team}</span>
-              <span className="font-semibold">{score} points</span>
-            </div>
-          ))}
-        </div>
-        <button
-          onClick={onGameEnd}
-          className="px-8 py-3 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+      <div className="min-h-screen bg-gradient-to-br from-[#223164] via-[#1a2651] to-[#223164] flex items-center justify-center p-4">
+        <motion.div
+          className="bg-white/10 backdrop-blur-lg rounded-3xl p-12 max-w-2xl w-full text-center space-y-8 border border-white/20"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
         >
-          New Game
-        </button>
+          <div className="text-6xl mb-4">🎉</div>
+          <h1 className="text-5xl font-bold text-white mb-6">Game Over!</h1>
+          <h2 className="text-3xl font-semibold text-[#ECACAE] mb-8">
+            {winners.length === 1
+              ? `${winners[0]} Wins!`
+              : `${winners.join(" & ")} Win!`}
+          </h2>
+
+          <div className="space-y-4">
+            {Object.entries(gameState.teamScores).map(([team, score]) => (
+              <div
+                key={team}
+                className="bg-white/5 rounded-xl p-4 flex justify-between items-center"
+              >
+                <span className="text-white text-xl font-semibold">{team}</span>
+                <span className="text-[#ECACAE] text-2xl font-bold">
+                  {score} points
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={onGameEnd}
+            className="mt-8 px-8 py-4 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold text-xl hover:opacity-90 transition"
+          >
+            New Game
+          </button>
+        </motion.div>
       </div>
     );
   }
 
   if (!gameState.isRoundActive) {
     return (
-      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-2xl w-full mx-auto text-center">
-        <h1 className="text-3xl font-bold text-white mb-4">
-          Round {gameState.currentRound}
-        </h1>
-        <h2 className="text-2xl font-semibold text-[#ECACAE] mb-6">
-          {currentTeam}
-        </h2>
+      <div className="min-h-screen bg-gradient-to-br from-[#223164] via-[#1a2651] to-[#223164] flex items-center justify-center p-4">
+        <motion.div
+          className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 max-w-md w-full text-center space-y-6 border border-white/20"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+        >
+          <h2 className="text-3xl font-bold text-white">
+            Round {gameState.currentRound}
+          </h2>
+          <div className="text-5xl font-bold text-[#ECACAE]">{currentTeam}</div>
 
-        <div className="mb-6 p-4 bg-white/10 rounded-lg">
-          <h3 className="text-white font-semibold mb-3">Current Scores</h3>
-          <div className="space-y-2">
+          <div className="bg-white/5 rounded-xl p-6 space-y-4">
+            <h3 className="text-white text-lg font-semibold">Current Scores</h3>
             {Object.entries(gameState.teamScores).map(([team, score]) => (
-              <div key={team} className="flex justify-between text-white">
-                <span
-                  className={
-                    team === currentTeam ? "font-semibold text-[#ECACAE]" : ""
-                  }
-                >
-                  {team}
-                </span>
-                <span className="font-semibold">
+              <div
+                key={team}
+                className="flex justify-between items-center text-white"
+              >
+                <span>{team}</span>
+                <span className="font-bold">
                   {score} / {gameState.settings.pointsRequired}
                 </span>
               </div>
             ))}
           </div>
-        </div>
 
-        <p className="text-white/80 mb-8">
-          {availableWords.length} words remaining
-        </p>
-        <button
-          onClick={() => startRound()}
-          className="px-8 py-4 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold text-xl hover:opacity-90 transition"
-        >
-          Start Round
-        </button>
+          <p className="text-white/70">
+            {availableWords.length} words remaining
+          </p>
+
+          <button
+            onClick={() => startRound()}
+            className="px-8 py-4 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold text-xl hover:opacity-90 transition"
+          >
+            Start Round
+          </button>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-2xl w-full mx-auto">
-      <div className="text-center mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-white/80">
-            <div className="text-sm">Round {gameState.currentRound}</div>
-            <div className="text-lg font-semibold">{currentTeam}</div>
-          </div>
-          <div className="text-white/80">
-            <div className="text-sm">Time</div>
-            <motion.div
-              className="text-2xl font-bold text-[#ECACAE]"
-              animate={{
-                scale:
-                  (currentTime || remainingTime) <= 5 &&
-                  (currentTime || remainingTime) > 0
-                    ? [1, 1.2, 1]
-                    : 1,
-                opacity:
-                  (currentTime || remainingTime) <= 5 &&
-                  (currentTime || remainingTime) > 0
-                    ? [1, 0.5, 1]
-                    : 1,
-              }}
-              transition={{
-                duration: 0.5,
-                repeat:
-                  (currentTime || remainingTime) <= 5 &&
-                  (currentTime || remainingTime) > 0
-                    ? Infinity
-                    : 0,
-                repeatType: "loop",
-              }}
-            >
-              {currentTime || remainingTime}s
-            </motion.div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#223164] via-[#1a2651] to-[#223164] flex flex-col items-center justify-center p-4 relative">
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center">
+        <div className="text-white text-xl font-semibold">
+          Round {gameState.currentRound}
         </div>
-        <div className="text-white/60 text-sm">
+        <div className="text-[#ECACAE] text-2xl font-bold">{currentTeam}</div>
+      </div>
+
+      {/* Timer */}
+      <div className="absolute top-24 flex flex-col items-center gap-2">
+        <div className="text-white/70 text-sm font-medium">Time</div>
+        <motion.div
+          className="text-6xl font-bold text-white"
+          animate={{
+            scale:
+              (currentTime || remainingTime) <= 5 &&
+              (currentTime || remainingTime) > 0
+                ? [1, 1.2, 1]
+                : 1,
+            opacity:
+              (currentTime || remainingTime) <= 5 &&
+              (currentTime || remainingTime) > 0
+                ? [1, 0.5, 1]
+                : 1,
+          }}
+          transition={{
+            duration: 0.5,
+            repeat:
+              (currentTime || remainingTime) <= 5 &&
+              (currentTime || remainingTime) > 0
+                ? Infinity
+                : 0,
+            repeatType: "loop",
+          }}
+        >
+          {currentTime || remainingTime}s
+        </motion.div>
+        <div className="text-white/50 text-sm">
           {roundResults.length} / {roundWords.length} words
         </div>
       </div>
 
-      <motion.div
-        className="bg-white/20 rounded-2xl p-12 min-h-[300px] flex items-center justify-center select-none relative overflow-hidden"
-        layout
-      >
-        <AnimatePresence mode="wait">
+      {/* Cheating Detection Banner */}
+      <AnimatePresence>
+        {cheatingDetected && (
+          <motion.div
+            className="absolute top-48 bg-red-500/90 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold shadow-lg border border-red-400"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            ⚠️ Cheating Detected - Wait for round to end
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Card Stack */}
+      <div className="relative w-full max-w-md h-96 flex items-center justify-center">
+        <AnimatePresence mode="popLayout">
           {/* Next card (preview) */}
           {nextWord && (
             <motion.div
               key={`next-${nextWord}`}
-              className="absolute inset-0 flex items-center justify-center bg-white/10 rounded-2xl"
-              initial={{ scale: 0.8, y: 40, opacity: 0.5 }}
-              animate={{ scale: 0.9, y: 20, opacity: 0.7 }}
-              exit={{ scale: 0.8, y: 40, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              className="absolute w-full h-80 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/20 shadow-2xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 0.95, opacity: 0.5 }}
+              style={{ zIndex: 1 }}
             >
-              <div className="text-3xl md:text-4xl font-bold text-white/60 text-center">
-                {nextWord}
+              <div className="h-full flex items-center justify-center p-8">
+                <p className="text-white text-4xl font-bold text-center">
+                  {nextWord}
+                </p>
               </div>
             </motion.div>
           )}
 
           {/* Current card */}
-          <motion.div
-            key={currentWord}
-            className="flex items-center justify-center w-full h-full bg-white/20 rounded-2xl absolute inset-0"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{
-              x: cardExitX,
-              opacity: 0,
-              scale: 0.5,
-              rotate: cardExitX > 0 ? 15 : cardExitX < 0 ? -15 : 0,
-              transition: { duration: 0.3, ease: "easeOut" },
-            }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.7}
-            onDragEnd={(_, info: PanInfo) => {
-              const swipeThreshold = 100;
-              if (info.offset.x > swipeThreshold) {
-                handleWordAction(true); // Swipe right = guessed
-              } else if (info.offset.x < -swipeThreshold) {
-                handleWordAction(false); // Swipe left = skip
-              }
-            }}
-            whileDrag={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-white text-center">
-              {currentWord}
-            </h2>
-          </motion.div>
-        </AnimatePresence>
-      </motion.div>
+          {currentWord && !cheatingDetected && (
+            <motion.div
+              key={currentWord}
+              className="absolute w-full h-80 bg-white/10 backdrop-blur-lg rounded-3xl border border-white/30 shadow-2xl cursor-grab active:cursor-grabbing"
+              style={{ zIndex: 2 }}
+              initial={{ scale: 1, opacity: 1, x: 0, rotate: 0 }}
+              exit={{
+                x: cardExitX,
+                opacity: 0,
+                scale: 0.8,
+                rotate: cardExitX > 0 ? 15 : cardExitX < 0 ? -15 : 0,
+                transition: { duration: 0.3, ease: "easeOut" },
+              }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.7}
+              onDragEnd={(_, info: PanInfo) => {
+                const swipeThreshold = 100;
+                if (info.offset.x > swipeThreshold) {
+                  handleWordAction(true); // Swipe right = guessed
+                } else if (info.offset.x < -swipeThreshold) {
+                  handleWordAction(false); // Swipe left = skip
+                }
+              }}
+              whileDrag={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <div className="h-full flex items-center justify-center p-8">
+                <p className="text-white text-5xl font-bold text-center leading-tight">
+                  {currentWord}
+                </p>
+              </div>
+            </motion.div>
+          )}
 
-      <div className="mt-6 flex gap-4">
+          {/* Cheating placeholder card */}
+          {cheatingDetected && (
+            <motion.div
+              key="cheating-placeholder"
+              className="absolute w-full h-80 bg-red-500/20 backdrop-blur-lg rounded-3xl border border-red-400/50 shadow-2xl"
+              style={{ zIndex: 2 }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+            >
+              <div className="h-full flex items-center justify-center p-8">
+                <div className="text-center space-y-4">
+                  <div className="text-6xl">⚠️</div>
+                  <p className="text-white text-2xl font-bold">
+                    Cheating Detected
+                  </p>
+                  <p className="text-white/70 text-sm">
+                    Too many words guessed too quickly
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-4 mt-12 w-full max-w-md">
         <motion.button
           onClick={() => handleWordAction(false)}
-          className="flex-1 px-6 py-4 bg-red-500/20 text-red-200 rounded-lg font-semibold hover:bg-red-500/30 transition"
-          whileTap={{
-            scale: 0.85,
-            rotate: -2,
-            boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)",
-          }}
+          disabled={cheatingDetected}
+          className="flex-1 px-6 py-4 bg-red-500/20 text-red-200 rounded-lg font-semibold hover:bg-red-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          whileTap={
+            !cheatingDetected
+              ? {
+                  scale: 0.85,
+                  rotate: -2,
+                  boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)",
+                }
+              : {}
+          }
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
           Skip ❌
         </motion.button>
+
         <motion.button
           onClick={() => handleWordAction(true)}
-          className="flex-1 px-6 py-4 bg-green-500/20 text-green-200 rounded-lg font-semibold hover:bg-green-500/30 transition"
-          whileTap={{
-            scale: 0.85,
-            rotate: 2,
-            boxShadow: "0 0 20px rgba(34, 197, 94, 0.5)",
-          }}
+          disabled={cheatingDetected}
+          className="flex-1 px-6 py-4 bg-green-500/20 text-green-200 rounded-lg font-semibold hover:bg-green-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          whileTap={
+            !cheatingDetected
+              ? {
+                  scale: 0.85,
+                  rotate: 2,
+                  boxShadow: "0 0 20px rgba(34, 197, 94, 0.5)",
+                }
+              : {}
+          }
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
           Guessed ✅
