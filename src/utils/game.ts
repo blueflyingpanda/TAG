@@ -29,6 +29,7 @@ export const initializeGameState = (settings: GameSettings): GameState => {
     roundStartTime: null,
     roundEndTime: null,
     isRoundActive: false,
+    isPaused: false,
     roundResults: [],
   };
 };

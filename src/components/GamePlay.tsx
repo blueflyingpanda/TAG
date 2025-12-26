@@ -8,6 +8,7 @@ import {
   getCurrentTeam,
   shuffleArray,
 } from "../utils/game";
+import { storage } from "../utils/storage";
 
 interface GamePlayProps {
   gameState: GameState;
@@ -28,6 +29,10 @@ export default function GamePlay({
     { word: string; guessed: boolean }[]
   >([]);
   const [currentTime, setCurrentTime] = useState(0);
+  const [pausedRemainingTime, setPausedRemainingTime] = useState<number | null>(
+    null
+  );
+  const [roundPausedOnce, setRoundPausedOnce] = useState(false);
   const timerIntervalRef = useRef<number | null>(null);
   const roundResultsRef = useRef<{ word: string; guessed: boolean }[]>([]);
   const [roundEndedByTimeout, setRoundEndedByTimeout] = useState(false);
@@ -48,7 +53,7 @@ export default function GamePlay({
   const currentTeam = getCurrentTeam(gameState);
 
   const remainingTime =
-    gameState.isRoundActive && gameState.roundStartTime
+    gameState.isRoundActive && gameState.roundStartTime && !gameState.isPaused
       ? Math.max(
           0,
           Math.ceil(
@@ -57,11 +62,17 @@ export default function GamePlay({
               1000
           )
         )
+      : gameState.isPaused
+      ? pausedRemainingTime || 0
       : 0;
 
   // Update timer display every second
   useEffect(() => {
-    if (gameState.isRoundActive && gameState.roundStartTime !== null) {
+    if (
+      gameState.isRoundActive &&
+      gameState.roundStartTime !== null &&
+      !gameState.isPaused
+    ) {
       timerIntervalRef.current = window.setInterval(() => {
         const startTime = gameState.roundStartTime;
         if (startTime === null) return;
@@ -131,11 +142,13 @@ export default function GamePlay({
     setRoundResults([]);
     roundResultsRef.current = [];
     setCheatingDetected(false);
+    setRoundPausedOnce(false); // Reset pause tracking for new round
     roundStartTimeRef.current = Date.now();
 
     setGameState({
       ...gameState,
       isRoundActive: true,
+      isPaused: false,
       roundStartTime: Date.now(),
       currentWordIndex: 0,
     });
@@ -165,6 +178,69 @@ export default function GamePlay({
       setRoundResults(roundEndResults);
       onRoundEnd(roundEndResults);
     }, 100);
+  };
+
+  const stopRound = () => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+    }
+
+    // Capture current remaining time before pausing
+    const currentRemaining = Math.max(
+      0,
+      Math.ceil(
+        (gameState.settings.roundTimer * 1000 -
+          (Date.now() - (gameState.roundStartTime || 0))) /
+          1000
+      )
+    );
+    setPausedRemainingTime(currentRemaining);
+
+    // Shuffle all remaining words including current word as penalty
+    const remainingWords = roundWords.slice(roundResults.length);
+    const shuffledRemaining = shuffleArray(remainingWords);
+    const newRoundWords = [
+      ...roundWords.slice(0, roundResults.length),
+      ...shuffledRemaining,
+    ];
+
+    setRoundWords(newRoundWords);
+    // Update current word to the new shuffled word
+    const newCurrentWord = shuffledRemaining[0] || "";
+    setCurrentWord(newCurrentWord);
+
+    setRoundPausedOnce(true); // Mark that round has been paused once
+
+    // Update game state
+    const updatedState = {
+      ...gameState,
+      isPaused: true,
+      roundStartTime: null, // Stop the timer
+    };
+
+    setGameState(updatedState);
+
+    // Save to local storage (but don't send to API)
+    storage.saveGameState(updatedState);
+  };
+
+  const resumeRound = () => {
+    // Calculate new start time to preserve remaining time
+    const remainingSeconds = pausedRemainingTime || 0;
+    const newStartTime =
+      Date.now() - (gameState.settings.roundTimer - remainingSeconds) * 1000;
+
+    const updatedState = {
+      ...gameState,
+      isPaused: false,
+      roundStartTime: newStartTime,
+    };
+
+    setGameState(updatedState);
+    setPausedRemainingTime(null); // Clear paused time
+
+    // Clear saved state since we're resuming
+    storage.clearGameState();
   };
 
   const checkForCheating = (guessedWordsCount: number): boolean => {
@@ -389,6 +465,20 @@ export default function GamePlay({
             ⚠️ Cheating Detected - Wait for round to end
           </motion.div>
         )}
+
+        {/* Pause Warning Banner */}
+        {gameState.isPaused && (
+          <motion.div
+            className="absolute top-48 bg-yellow-500/90 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold shadow-lg border border-yellow-400"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            ⚠️ Round Paused - Current data may not be saved if round is not
+            finished
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Card Stack */}
@@ -412,7 +502,7 @@ export default function GamePlay({
           )}
 
           {/* Current card */}
-          {currentWord && !cheatingDetected && (
+          {currentWord && !cheatingDetected && !gameState.isPaused && (
             <motion.div
               key={currentWord}
               className="absolute w-full h-80 bg-white/10 backdrop-blur-lg rounded-3xl border border-white/30 shadow-2xl cursor-grab active:cursor-grabbing"
@@ -469,47 +559,112 @@ export default function GamePlay({
               </div>
             </motion.div>
           )}
+
+          {/* Paused card */}
+          {gameState.isPaused && (
+            <motion.div
+              key="paused-placeholder"
+              className="absolute w-full h-80 bg-yellow-500/20 backdrop-blur-lg rounded-3xl border border-yellow-400/50 shadow-2xl"
+              style={{ zIndex: 2 }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+            >
+              <div className="h-full flex items-center justify-center p-8">
+                <div className="text-center space-y-4">
+                  <div className="text-6xl">⏸️</div>
+                  <p className="text-white text-2xl font-bold">Round Paused</p>
+                  <p className="text-white/70 text-sm">
+                    Word is hidden until resumed
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-4 mt-12 w-full max-w-md">
-        <motion.button
-          onClick={() => handleWordAction(false)}
-          disabled={cheatingDetected}
-          className="flex-1 px-6 py-4 bg-red-500/20 text-red-200 rounded-lg font-semibold hover:bg-red-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          whileTap={
-            !cheatingDetected
-              ? {
-                  scale: 0.85,
-                  rotate: -2,
-                  boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)",
-                }
-              : {}
-          }
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        >
-          Skip ❌
-        </motion.button>
+      {!gameState.isPaused ? (
+        <>
+          {/* Main Action Buttons */}
+          <div className="flex gap-4 mt-12 w-full max-w-md">
+            <motion.button
+              onClick={() => handleWordAction(false)}
+              disabled={cheatingDetected}
+              className="flex-1 px-6 py-4 bg-red-500/20 text-red-200 rounded-lg font-semibold hover:bg-red-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              whileTap={
+                !cheatingDetected
+                  ? {
+                      scale: 0.85,
+                      rotate: -2,
+                      boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)",
+                    }
+                  : {}
+              }
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              Skip ❌
+            </motion.button>
 
-        <motion.button
-          onClick={() => handleWordAction(true)}
-          disabled={cheatingDetected}
-          className="flex-1 px-6 py-4 bg-green-500/20 text-green-200 rounded-lg font-semibold hover:bg-green-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          whileTap={
-            !cheatingDetected
-              ? {
-                  scale: 0.85,
-                  rotate: 2,
-                  boxShadow: "0 0 20px rgba(34, 197, 94, 0.5)",
-                }
-              : {}
-          }
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        >
-          Guessed ✅
-        </motion.button>
-      </div>
+            <motion.button
+              onClick={() => handleWordAction(true)}
+              disabled={cheatingDetected}
+              className="flex-1 px-6 py-4 bg-green-500/20 text-green-200 rounded-lg font-semibold hover:bg-green-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              whileTap={
+                !cheatingDetected
+                  ? {
+                      scale: 0.85,
+                      rotate: 2,
+                      boxShadow: "0 0 20px rgba(34, 197, 94, 0.5)",
+                    }
+                  : {}
+              }
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              Guessed ✅
+            </motion.button>
+          </div>
+
+          {/* Pause Button - Positioned at bottom */}
+          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
+            <motion.button
+              onClick={stopRound}
+              disabled={cheatingDetected || roundPausedOnce}
+              className={`px-6 py-4 rounded-lg font-semibold transition ${
+                roundPausedOnce
+                  ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
+                  : "bg-yellow-500/20 text-yellow-200 hover:bg-yellow-500/30"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              whileTap={
+                !cheatingDetected && !roundPausedOnce
+                  ? {
+                      scale: 0.85,
+                      boxShadow: "0 0 20px rgba(234, 179, 8, 0.5)",
+                    }
+                  : {}
+              }
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              ⏸️ {roundPausedOnce ? "Paused" : "Pause"}
+            </motion.button>
+          </div>
+        </>
+      ) : (
+        /* Resume Button - Positioned at bottom when paused */
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
+          <motion.button
+            onClick={resumeRound}
+            className="px-8 py-4 bg-blue-500/20 text-blue-200 rounded-lg font-semibold hover:bg-blue-500/30 transition"
+            whileTap={{
+              scale: 0.85,
+              boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)",
+            }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          >
+            ▶️ Resume Round
+          </motion.button>
+        </div>
+      )}
     </div>
   );
 }

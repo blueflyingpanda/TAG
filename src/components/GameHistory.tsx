@@ -97,6 +97,7 @@ export default function GameHistory({
         roundStartTime: null,
         roundEndTime: null,
         isRoundActive: false, // API doesn't track this
+        isPaused: false, // Default to not paused for resumed games
         roundResults: [
           ...game.words_guessed.map((word) => ({ word, guessed: true })),
           ...game.words_skipped.map((word) => ({ word, guessed: false })),

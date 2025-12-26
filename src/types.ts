@@ -82,6 +82,7 @@ export interface GameState {
   roundStartTime: number | null;
   roundEndTime: number | null;
   isRoundActive: boolean;
+  isPaused: boolean;
   roundResults: {
     word: string;
     guessed: boolean;
