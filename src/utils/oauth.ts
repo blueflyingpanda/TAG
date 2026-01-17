@@ -8,6 +8,7 @@
  */
 
 import type { User } from '../types';
+import { AUTH_ENDPOINTS } from './config';
 
 const TOKEN_STORAGE_KEY = 'auth_token';
 
@@ -31,7 +32,7 @@ export function initiateOAuthLogin(): void {
   // Use a form POST to avoid CORS issues with redirects
   const form = document.createElement('form');
   form.method = 'POST';
-  form.action = 'http://localhost:8000/auth/login';
+  form.action = AUTH_ENDPOINTS.login;
   document.body.appendChild(form);
   form.submit();
 }
@@ -40,7 +41,7 @@ export function initiateOAuthLogin(): void {
  * Exchange OAuth code for JWT token
  */
 export async function exchangeOAuthCode(code: string): Promise<string> {
-  const response = await fetch("http://localhost:8000/auth/exchange", {
+  const response = await fetch(AUTH_ENDPOINTS.exchange, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

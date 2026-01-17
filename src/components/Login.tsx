@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AUTH_ENDPOINTS } from "../utils/config";
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
@@ -6,7 +7,7 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     // Redirect to backend for OAuth flow; backend will redirect back to FE with code
-    window.location.href = "http://localhost:8000/auth/login";
+    window.location.href = AUTH_ENDPOINTS.login;
   };
 
   return (

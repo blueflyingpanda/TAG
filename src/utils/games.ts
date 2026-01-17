@@ -1,7 +1,6 @@
 import type { GameCreatePayload, GameDetailsResponse, GameUpdatePayload, PaginatedGames } from '../types';
+import { API_BASE } from './config';
 import { authenticatedFetch } from './oauth';
-
-const API_BASE = 'http://localhost:8000';
 
 /**
  * Get paginated list of games
