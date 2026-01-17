@@ -7,7 +7,7 @@ const isDevelopment = window.location.hostname === 'localhost' || window.locatio
 
 export const API_BASE = isDevelopment
   ? 'http://localhost:8000'
-  : 'http://tag-api.servegame.com';
+  : 'https://tag-api.servegame.com';
 
 export const AUTH_ENDPOINTS = {
   login: `${API_BASE}/auth/login`,
