@@ -41,6 +41,7 @@ export default function GamePlay({
   const [cardExitX, setCardExitX] = useState(0);
   const [isCardExiting, setIsCardExiting] = useState(false);
   const [nextWord, setNextWord] = useState("");
+  const [dragX, setDragX] = useState(0);
 
   // Cheating detection
   const [cheatingDetected, setCheatingDetected] = useState(false);
@@ -260,6 +261,7 @@ export default function GamePlay({
     // Set animation direction based on action
     setIsCardExiting(true);
     setCardExitX(guessed ? 300 : -300);
+    setDragX(0);
 
     // Process the word action after animation starts
     setTimeout(() => {
@@ -304,6 +306,7 @@ export default function GamePlay({
         setIsCardExiting(false);
         setCardExitX(0);
         setNextWord("");
+        setDragX(0);
       }, 150);
     }, 200);
   };
@@ -496,59 +499,109 @@ export default function GamePlay({
       <div className="relative w-full max-w-md flex flex-col items-center mt-2 md:mt-0 gap-3 md:gap-6">
         {/* Card Stack */}
         <div className="relative w-full h-40 md:h-96 flex items-center justify-center md:-mt-24">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence mode="popLayout" initial={false}>
+            {/* Deck cards - show 2-3 cards stacked behind */}
+            {roundWords.slice(
+              gameState.currentWordIndex + 1,
+              gameState.currentWordIndex + 3
+            ).map((word, index) => (
+              <motion.div
+                key={`deck-${word}-${index}`}
+                className="absolute w-full h-40 md:h-80 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/20 shadow-2xl"
+                initial={{ scale: 0, y: 26, opacity: 0 }}
+                animate={{
+                  scale: 0.65 - index * 0.05,
+                  y: 10 + index * 8,
+                  opacity: 0.3 - index * 0.1,
+                  x: 0,
+                }}
+                style={{ zIndex: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20, delay: index * 0.05 }}
+              >
+                <div className="h-full flex items-center justify-center p-4 md:p-8">
+                  <p className="text-white text-lg md:text-2xl font-bold text-center line-clamp-2 md:line-clamp-4 opacity-50">
+                    {word}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+
             {/* Next card (preview) */}
             {nextWord && (
               <motion.div
                 key={`next-${nextWord}`}
                 className="absolute w-full h-40 md:h-80 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/20 shadow-2xl"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 0.95, opacity: 0.5 }}
-              style={{ zIndex: 1 }}
-            >
-              <div className="h-full flex items-center justify-center p-4 md:p-8">
-                <p className="text-white text-lg md:text-2xl font-bold text-center line-clamp-2 md:line-clamp-4">
-                  {nextWord}
-                </p>
-              </div>
-            </motion.div>
-          )}
+                initial={{ scale: 0, y: 26, opacity: 0 }}
+                animate={{
+                  scale: 0.75,
+                  y: 15,
+                  opacity: 0.5,
+                  x: 0,
+                }}
+                style={{ zIndex: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <div className="h-full flex items-center justify-center p-4 md:p-8">
+                  <p className="text-white text-lg md:text-2xl font-bold text-center line-clamp-2 md:line-clamp-4">
+                    {nextWord}
+                  </p>
+                </div>
+              </motion.div>
+            )}
 
-          {/* Current card */}
-          {currentWord && !cheatingDetected && !gameState.isPaused && (
-            <motion.div
-              key={currentWord}
-              className="absolute w-full h-40 md:h-80 bg-white/10 backdrop-blur-lg rounded-3xl border border-white/30 shadow-2xl cursor-grab active:cursor-grabbing"
-              style={{ zIndex: 2 }}
-              initial={{ scale: 1, opacity: 1, x: 0, rotate: 0 }}
-              exit={{
-                x: cardExitX,
-                opacity: 0,
-                scale: 0.8,
-                rotate: cardExitX > 0 ? 15 : cardExitX < 0 ? -15 : 0,
-                transition: { duration: 0.3, ease: "easeOut" },
-              }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.7}
-              onDragEnd={(_, info: PanInfo) => {
-                const swipeThreshold = 100;
-                if (info.offset.x > swipeThreshold) {
-                  handleWordAction(true); // Swipe right = guessed
-                } else if (info.offset.x < -swipeThreshold) {
-                  handleWordAction(false); // Swipe left = skip
-                }
-              }}
-              whileDrag={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-              <div className="h-full flex items-center justify-center p-2 md:p-6">
-                <p className="text-white text-lg md:text-3xl font-bold text-center leading-tight line-clamp-2 md:line-clamp-5">
-                  {currentWord}
-                </p>
-              </div>
-            </motion.div>
-          )}
+            {/* Current card */}
+            {currentWord && !cheatingDetected && !gameState.isPaused && (
+              <motion.div
+                key={currentWord}
+                className="absolute w-full h-40 md:h-80 bg-white/10 backdrop-blur-lg rounded-3xl border border-white/30 shadow-2xl cursor-grab active:cursor-grabbing"
+                style={{ zIndex: 2 }}
+                initial={false}
+                animate={{
+                  scale: 1,
+                  y: 0,
+                  opacity: 1,
+                  x: dragX,
+                  rotate: dragX * 0.1,
+                }}
+                exit={{
+                  x: cardExitX,
+                  opacity: 0,
+                  scale: 0.5,
+                  rotate: cardExitX > 0 ? 15 : cardExitX < 0 ? -15 : 0,
+                  transition: { duration: 0.2 },
+                }}
+                drag="x"
+                dragConstraints={{ left: -300, right: 300 }}
+                dragElastic={0.2}
+                onDrag={(_, info) => {
+                  setDragX(info.offset.x);
+                }}
+                onDragEnd={(_, info: PanInfo) => {
+                  const swipeThreshold = 100;
+                  const velocityThreshold = 500;
+
+                  if (info.offset.x > swipeThreshold || info.velocity.x > velocityThreshold) {
+                    handleWordAction(true); // Swipe right = guessed
+                  } else if (info.offset.x < -swipeThreshold || info.velocity.x < -velocityThreshold) {
+                    handleWordAction(false); // Swipe left = skip
+                  } else {
+                    // Snap back if not swiped far enough
+                    setDragX(0);
+                  }
+                }}
+                whileDrag={{
+                  scale: 1.05,
+                  transition: { type: "spring", stiffness: 300, damping: 20 }
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <div className="h-full flex items-center justify-center p-2 md:p-6">
+                  <p className="text-white text-lg md:text-3xl font-bold text-center leading-tight line-clamp-2 md:line-clamp-5">
+                    {currentWord}
+                  </p>
+                </div>
+              </motion.div>
+            )}
 
           {/* Cheating placeholder card */}
           {cheatingDetected && (
