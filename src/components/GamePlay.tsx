@@ -325,42 +325,50 @@ export default function GamePlay({
 
   if (winners.length > 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#223164] via-[#1a2651] to-[#223164] flex items-center justify-center p-4">
-        <motion.div
-          className="bg-white/10 backdrop-blur-lg rounded-3xl p-12 max-w-2xl w-full text-center space-y-8 border border-white/20"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="text-6xl mb-4">🎉</div>
-          <h1 className="text-5xl font-bold text-white mb-6">Game Over!</h1>
-          <h2 className="text-3xl font-semibold text-[#ECACAE] mb-8">
-            {winners.length === 1
-              ? `${winners[0]} Wins!`
-              : `${winners.join(" & ")} Win!`}
-          </h2>
+      <div className="fixed inset-0 bg-gradient-to-br from-[#223164] via-[#1a2651] to-[#223164] flex flex-col p-4">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto pb-20">
+          <motion.div
+            className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 max-w-2xl w-full mx-auto text-center space-y-6 border border-white/20"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="text-5xl mb-3">🎉</div>
+            <h1 className="text-4xl font-bold text-white mb-4">Game Over!</h1>
+            <h2 className="text-2xl font-semibold text-[#ECACAE] mb-6">
+              {winners.length === 1
+                ? `${winners[0]} Wins!`
+                : `${winners.join(" & ")} Win!`}
+            </h2>
 
-          <div className="space-y-4">
-            {Object.entries(gameState.teamScores).map(([team, score]) => (
-              <div
-                key={team}
-                className="bg-white/5 rounded-xl p-4 flex justify-between items-center"
-              >
-                <span className="text-white text-xl font-semibold">{team}</span>
-                <span className="text-[#ECACAE] text-2xl font-bold">
-                  {score} points
-                </span>
-              </div>
-            ))}
-          </div>
+            <div className="space-y-3">
+              {Object.entries(gameState.teamScores).map(([team, score]) => (
+                <div
+                  key={team}
+                  className="bg-white/5 rounded-xl p-3 flex justify-between items-center"
+                >
+                  <span className="text-white text-base font-semibold truncate">
+                    {team}
+                  </span>
+                  <span className="text-[#ECACAE] text-lg font-bold ml-2">
+                    {score}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
 
+        {/* Fixed Button at Bottom */}
+        <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none">
           <button
             onClick={onGameEnd}
-            className="mt-8 px-8 py-4 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold text-xl hover:opacity-90 transition"
+            className="px-6 py-3 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition pointer-events-auto"
           >
             New Game
           </button>
-        </motion.div>
+        </div>
       </div>
     );
   }
@@ -376,7 +384,9 @@ export default function GamePlay({
           <h2 className="text-3xl font-bold text-white">
             Round {gameState.currentRound}
           </h2>
-          <div className="text-5xl font-bold text-[#ECACAE]">{currentTeam}</div>
+          <div className="text-2xl font-bold text-[#ECACAE] truncate max-w-[200px]">
+            {currentTeam}
+          </div>
 
           <div className="bg-white/5 rounded-xl p-6 space-y-4">
             <h3 className="text-white text-lg font-semibold">Current Scores</h3>
@@ -409,20 +419,21 @@ export default function GamePlay({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#223164] via-[#1a2651] to-[#223164] flex flex-col items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-gradient-to-br from-[#223164] via-[#1a2651] to-[#223164] flex flex-col items-center justify-center p-2 md:p-4 relative overflow-hidden">
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center">
-        <div className="text-white text-xl font-semibold">
+      <div className="absolute top-0 left-0 right-0 p-1 md:p-6 flex justify-between items-center">
+        <div className="text-white text-base md:text-lg font-semibold">
           Round {gameState.currentRound}
         </div>
-        <div className="text-[#ECACAE] text-2xl font-bold">{currentTeam}</div>
+        <div className="text-[#ECACAE] text-base md:text-lg font-bold truncate max-w-xs">
+          {currentTeam}
+        </div>
       </div>
 
       {/* Timer */}
-      <div className="absolute top-24 flex flex-col items-center gap-2">
-        <div className="text-white/70 text-sm font-medium">Time</div>
+      <div className="absolute top-10 md:top-12 flex flex-col items-center gap-1">
         <motion.div
-          className="text-6xl font-bold text-white"
+          className="text-3xl md:text-4xl font-bold text-white"
           animate={{
             scale:
               (currentTime || remainingTime) <= 5 &&
@@ -447,8 +458,8 @@ export default function GamePlay({
         >
           {currentTime || remainingTime}s
         </motion.div>
-        <div className="text-white/50 text-sm">
-          {roundResults.length} / {roundWords.length} words
+        <div className="text-white/50 text-xs">
+          {roundResults.length} / {roundWords.length}
         </div>
       </div>
 
@@ -456,7 +467,7 @@ export default function GamePlay({
       <AnimatePresence>
         {cheatingDetected && (
           <motion.div
-            className="absolute top-48 bg-red-500/90 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold shadow-lg border border-red-400"
+            className="absolute top-32 md:top-48 bg-red-500/90 backdrop-blur-sm text-white px-4 py-2 md:px-6 md:py-3 rounded-xl font-semibold text-sm md:text-base shadow-lg border border-red-400"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -469,7 +480,7 @@ export default function GamePlay({
         {/* Pause Warning Banner */}
         {gameState.isPaused && (
           <motion.div
-            className="absolute top-48 bg-yellow-500/90 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold shadow-lg border border-yellow-400"
+            className="absolute top-24 md:top-32 bg-yellow-500/90 backdrop-blur-sm text-white px-4 py-2 md:px-6 md:py-3 rounded-xl font-semibold text-sm md:text-base shadow-lg border border-yellow-400"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -481,20 +492,22 @@ export default function GamePlay({
         )}
       </AnimatePresence>
 
-      {/* Card Stack */}
-      <div className="relative w-full max-w-md h-96 flex items-center justify-center">
-        <AnimatePresence mode="popLayout">
-          {/* Next card (preview) */}
-          {nextWord && (
-            <motion.div
-              key={`next-${nextWord}`}
-              className="absolute w-full h-80 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/20 shadow-2xl"
+      {/* Card and Buttons Container */}
+      <div className="relative w-full max-w-md flex flex-col items-center mt-2 md:mt-0 gap-3 md:gap-6">
+        {/* Card Stack */}
+        <div className="relative w-full h-40 md:h-96 flex items-center justify-center md:-mt-24">
+          <AnimatePresence mode="popLayout">
+            {/* Next card (preview) */}
+            {nextWord && (
+              <motion.div
+                key={`next-${nextWord}`}
+                className="absolute w-full h-40 md:h-80 bg-white/5 backdrop-blur-sm rounded-3xl border border-white/20 shadow-2xl"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 0.95, opacity: 0.5 }}
               style={{ zIndex: 1 }}
             >
-              <div className="h-full flex items-center justify-center p-8">
-                <p className="text-white text-4xl font-bold text-center">
+              <div className="h-full flex items-center justify-center p-4 md:p-8">
+                <p className="text-white text-lg md:text-2xl font-bold text-center line-clamp-2 md:line-clamp-4">
                   {nextWord}
                 </p>
               </div>
@@ -505,7 +518,7 @@ export default function GamePlay({
           {currentWord && !cheatingDetected && !gameState.isPaused && (
             <motion.div
               key={currentWord}
-              className="absolute w-full h-80 bg-white/10 backdrop-blur-lg rounded-3xl border border-white/30 shadow-2xl cursor-grab active:cursor-grabbing"
+              className="absolute w-full h-40 md:h-80 bg-white/10 backdrop-blur-lg rounded-3xl border border-white/30 shadow-2xl cursor-grab active:cursor-grabbing"
               style={{ zIndex: 2 }}
               initial={{ scale: 1, opacity: 1, x: 0, rotate: 0 }}
               exit={{
@@ -529,8 +542,8 @@ export default function GamePlay({
               whileDrag={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
-              <div className="h-full flex items-center justify-center p-8">
-                <p className="text-white text-5xl font-bold text-center leading-tight">
+              <div className="h-full flex items-center justify-center p-2 md:p-6">
+                <p className="text-white text-lg md:text-3xl font-bold text-center leading-tight line-clamp-2 md:line-clamp-5">
                   {currentWord}
                 </p>
               </div>
@@ -541,7 +554,7 @@ export default function GamePlay({
           {cheatingDetected && (
             <motion.div
               key="cheating-placeholder"
-              className="absolute w-full h-80 bg-red-500/20 backdrop-blur-lg rounded-3xl border border-red-400/50 shadow-2xl"
+              className="absolute w-full h-40 md:h-80 bg-red-500/20 backdrop-blur-lg rounded-3xl border border-red-400/50 shadow-2xl"
               style={{ zIndex: 2 }}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -564,7 +577,7 @@ export default function GamePlay({
           {gameState.isPaused && (
             <motion.div
               key="paused-placeholder"
-              className="absolute w-full h-80 bg-yellow-500/20 backdrop-blur-lg rounded-3xl border border-yellow-400/50 shadow-2xl"
+              className="absolute w-full h-40 md:h-80 bg-yellow-500/20 backdrop-blur-lg rounded-3xl border border-yellow-400/50 shadow-2xl"
               style={{ zIndex: 2 }}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -580,18 +593,18 @@ export default function GamePlay({
               </div>
             </motion.div>
           )}
-        </AnimatePresence>
-      </div>
+          </AnimatePresence>
+        </div>
 
-      {/* Action Buttons */}
-      {!gameState.isPaused ? (
-        <>
-          {/* Main Action Buttons */}
-          <div className="flex gap-4 mt-12 w-full max-w-md">
+        {/* Action Buttons */}
+        {!gameState.isPaused ? (
+          <div className="w-full px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:pb-0 flex flex-col gap-2 md:gap-3">
+          {/* Main Action Buttons - Skip and Guessed */}
+          <div className="flex gap-3 w-full">
             <motion.button
               onClick={() => handleWordAction(false)}
               disabled={cheatingDetected}
-              className="flex-1 px-6 py-4 bg-red-500/20 text-red-200 rounded-lg font-semibold hover:bg-red-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-3 py-2.5 md:px-4 md:py-4 bg-red-500/20 text-red-200 rounded-lg font-semibold text-sm md:text-base hover:bg-red-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
               whileTap={
                 !cheatingDetected
                   ? {
@@ -609,7 +622,7 @@ export default function GamePlay({
             <motion.button
               onClick={() => handleWordAction(true)}
               disabled={cheatingDetected}
-              className="flex-1 px-6 py-4 bg-green-500/20 text-green-200 rounded-lg font-semibold hover:bg-green-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-3 py-2.5 md:px-4 md:py-4 bg-green-500/20 text-green-200 rounded-lg font-semibold text-sm md:text-base hover:bg-green-500/30 transition disabled:opacity-50 disabled:cursor-not-allowed"
               whileTap={
                 !cheatingDetected
                   ? {
@@ -625,12 +638,12 @@ export default function GamePlay({
             </motion.button>
           </div>
 
-          {/* Pause Button - Positioned at bottom */}
-          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
+          {/* Pause Button - Positioned below Skip/Guessed */}
+          <div className="flex justify-center">
             <motion.button
               onClick={stopRound}
               disabled={cheatingDetected || roundPausedOnce}
-              className={`px-6 py-4 rounded-lg font-semibold transition ${
+              className={`px-4 py-2 md:px-5 md:py-3 rounded-lg font-semibold text-sm md:text-base transition ${
                 roundPausedOnce
                   ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
                   : "bg-yellow-500/20 text-yellow-200 hover:bg-yellow-500/30"
@@ -648,23 +661,24 @@ export default function GamePlay({
               ⏸️ {roundPausedOnce ? "Paused" : "Pause"}
             </motion.button>
           </div>
-        </>
-      ) : (
-        /* Resume Button - Positioned at bottom when paused */
-        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2">
-          <motion.button
-            onClick={resumeRound}
-            className="px-8 py-4 bg-blue-500/20 text-blue-200 rounded-lg font-semibold hover:bg-blue-500/30 transition"
-            whileTap={{
-              scale: 0.85,
-              boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)",
-            }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          >
-            ▶️ Resume Round
-          </motion.button>
-        </div>
-      )}
+          </div>
+        ) : (
+          /* Resume Button - Positioned at bottom when paused */
+          <div className="w-full pb-[max(0.5rem,env(safe-area-inset-bottom))] md:pb-0 flex justify-center">
+            <motion.button
+              onClick={resumeRound}
+              className="px-4 py-2 md:px-5 md:py-3 bg-blue-500/20 text-blue-200 rounded-lg font-semibold text-sm md:text-base hover:bg-blue-500/30 transition"
+              whileTap={{
+                scale: 0.85,
+                boxShadow: "0 0 20px rgba(59, 130, 246, 0.5)",
+              }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              ▶️ Resume
+            </motion.button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

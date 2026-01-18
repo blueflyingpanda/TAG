@@ -95,20 +95,20 @@ export default function ThemeSelection({
   >(initialFilters.selectedDifficulty);
   const [onlyMyThemes, setOnlyMyThemes] = useState(initialFilters.onlyMyThemes);
   const [onlyFavorites, setOnlyFavorites] = useState(
-    initialFilters.onlyFavorites
+    initialFilters.onlyFavorites,
   );
   const [showUnverified, setShowUnverified] = useState(
-    initialFilters.showUnverified
+    initialFilters.showUnverified,
   );
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState(initialFilters.searchTerm);
   const [importJson, setImportJson] = useState("");
   const [importError, setImportError] = useState("");
   const [orderBy, setOrderBy] = useState<ThemeOrderByType>(
-    initialFilters.orderBy
+    initialFilters.orderBy,
   );
   const [orderDescending, setOrderDescending] = useState(
-    initialFilters.orderDescending
+    initialFilters.orderDescending,
   );
 
   const fetchThemes = async () => {
@@ -123,7 +123,7 @@ export default function ThemeSelection({
         showUnverified ? false : undefined, // verified - false when showing unverified, undefined otherwise
         onlyFavorites,
         orderBy,
-        orderDescending
+        orderDescending,
       );
       setThemes(response.items);
     } catch (err) {
@@ -190,7 +190,7 @@ export default function ThemeSelection({
         !Array.isArray(themeData.description.words)
       ) {
         throw new Error(
-          "Invalid theme format. Expected API format with name, language, difficulty, and description object"
+          "Invalid theme format. Expected API format with name, language, difficulty, and description object",
         );
       }
 
@@ -210,36 +210,36 @@ export default function ThemeSelection({
 
       // Ensure team names are unique
       const teamNames = themeData.description.teams.map((t: any) =>
-        String(t).trim().toLowerCase()
+        String(t).trim().toLowerCase(),
       );
       const uniqueTeamNames = new Set(teamNames);
       if (uniqueTeamNames.size !== teamNames.length) {
         const duplicates = themeData.description.teams.filter(
           (t: any, index: number) =>
-            teamNames.indexOf(String(t).trim().toLowerCase()) !== index
+            teamNames.indexOf(String(t).trim().toLowerCase()) !== index,
         );
         throw new Error(
           `Team names must be unique. Duplicates found: ${duplicates
             .map((t: any) => `"${t}"`)
-            .join(", ")}`
+            .join(", ")}`,
         );
       }
 
       // Ensure words are unique
       const wordValues = themeData.description.words.map((w: any) =>
-        String(w).trim().toLowerCase()
+        String(w).trim().toLowerCase(),
       );
       const uniqueWords = new Set(wordValues);
       if (uniqueWords.size !== wordValues.length) {
         const duplicates = themeData.description.words.filter(
           (w: any, index: number) =>
-            wordValues.indexOf(String(w).trim().toLowerCase()) !== index
+            wordValues.indexOf(String(w).trim().toLowerCase()) !== index,
         );
         throw new Error(
           `Words must be unique within a theme. Duplicates found: ${duplicates
             .slice(0, 5)
             .map((w: any) => `"${w}"`)
-            .join(", ")}${duplicates.length > 5 ? "..." : ""}`
+            .join(", ")}${duplicates.length > 5 ? "..." : ""}`,
         );
       }
 
@@ -284,7 +284,7 @@ export default function ThemeSelection({
               value={selectedDifficulty || ""}
               onChange={(e) =>
                 setSelectedDifficulty(
-                  e.target.value ? parseInt(e.target.value) : undefined
+                  e.target.value ? parseInt(e.target.value) : undefined,
                 )
               }
               className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
