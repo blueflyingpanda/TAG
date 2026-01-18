@@ -271,7 +271,7 @@ export default function ThemeSelection({
             <select
               value={selectedLang}
               onChange={(e) => setSelectedLang(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
+              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
             >
               <option value="en">English</option>
               <option value="ru">Russian</option>
@@ -287,7 +287,7 @@ export default function ThemeSelection({
                   e.target.value ? parseInt(e.target.value) : undefined,
                 )
               }
-              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
+              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
             >
               <option value="">All</option>
               <option value="1">1 - Very Easy</option>
@@ -325,7 +325,7 @@ export default function ThemeSelection({
             <select
               value={orderBy}
               onChange={(e) => setOrderBy(e.target.value as ThemeOrderByType)}
-              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
+              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
             >
               <option value={ThemeOrderBy.ID}>Creation Date</option>
               <option value={ThemeOrderBy.NAME}>Name</option>
@@ -340,7 +340,7 @@ export default function ThemeSelection({
             <select
               value={orderDescending ? "desc" : "asc"}
               onChange={(e) => setOrderDescending(e.target.value === "desc")}
-              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
+              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
             >
               <option value="asc">Ascending</option>
               <option value="desc">Descending</option>

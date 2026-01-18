@@ -223,7 +223,7 @@ export default function CreateTheme({
           <select
             value={lang}
             onChange={(e) => setLang(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
+            className="w-full px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
           >
             <option value="en">English</option>
             <option value="ru">Russian</option>
@@ -237,7 +237,7 @@ export default function CreateTheme({
           <select
             value={difficulty}
             onChange={(e) => setDifficulty(parseInt(e.target.value))}
-            className="w-full px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
+            className="w-full px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
           >
             <option value={1}>1 - Very Easy</option>
             <option value={2}>2 - Easy</option>

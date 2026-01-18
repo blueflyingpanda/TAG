@@ -32,3 +32,14 @@ body {
   min-height: 100vh;
   background-color: #223164;
 }
+
+/* Fix dropdown options styling on Windows */
+select option {
+  background-color: #223164 !important;
+  color: #ffffff !important;
+}
+
+/* Ensure select elements have proper styling */
+select {
+  color-scheme: dark;
+}
