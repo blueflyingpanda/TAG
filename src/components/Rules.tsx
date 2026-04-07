@@ -1,28 +1,20 @@
-import { motion } from "framer-motion";
-
 export default function Rules() {
   return (
-    <motion.div
-      className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-4xl w-full mx-auto"
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: -20, opacity: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <h1 className="text-4xl font-bold text-white mb-8 text-center">
-        🎮 Alias Game Rules
+    <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-6 shadow-sm md:p-8">
+      <h1 className="mb-8 text-center text-3xl font-bold text-text md:text-4xl">
+        Alias Game Rules
       </h1>
 
-      <div className="space-y-6 text-white">
-        <div className="bg-white/5 rounded-lg p-6">
-          <h2 className="text-2xl font-semibold text-[#ECACAE] mb-4">
-            🎯 Basic Gameplay
+      <div className="space-y-6 text-text">
+        <div className="rounded-game bg-text/[0.06] p-6">
+          <h2 className="mb-4 text-2xl font-semibold text-success">
+            Basic Gameplay
           </h2>
-          <p className="text-white/80 mb-3">
-            <strong>Alias</strong> is a fun word-guessing game where teams
-            compete to guess as many words as possible within a time limit.
+          <p className="mb-3 text-text/80">
+            <strong>Alias</strong> is a fun word-guessing game where teams compete
+            to guess as many words as possible within a time limit.
           </p>
-          <ul className="list-disc list-inside space-y-2 text-white/80">
+          <ul className="list-inside list-disc space-y-2 text-text/80">
             <li>Players are divided into teams</li>
             <li>One team player plays at a time while others guess</li>
             <li>
@@ -35,11 +27,9 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-white/5 rounded-lg p-6">
-          <h2 className="text-2xl font-semibold text-[#ECACAE] mb-4">
-            🏆 Scoring
-          </h2>
-          <ul className="space-y-2 text-white/80">
+        <div className="rounded-game bg-text/[0.06] p-6">
+          <h2 className="mb-4 text-2xl font-semibold text-success">Scoring</h2>
+          <ul className="space-y-2 text-text/80">
             <li>
               <strong>Correct guess</strong>: +1 point
             </li>
@@ -57,43 +47,43 @@ export default function Rules() {
           </ul>
         </div>
 
-        <div className="bg-white/5 rounded-lg p-6">
-          <h2 className="text-2xl font-semibold text-[#ECACAE] mb-4">
-            ⚙️ Game Configuration
+        <div className="rounded-game bg-text/[0.06] p-6">
+          <h2 className="mb-4 text-2xl font-semibold text-success">
+            Game Configuration
           </h2>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <h3 className="font-semibold text-white mb-2">Points Required</h3>
-              <p className="text-white/70 text-sm">
+              <h3 className="mb-2 font-semibold text-text">Points Required</h3>
+              <p className="text-sm text-text/70">
                 Set the target score to win the game (default: 50 points)
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-2">Round Timer</h3>
-              <p className="text-white/70 text-sm">
+              <h3 className="mb-2 font-semibold text-text">Round Timer</h3>
+              <p className="text-sm text-text/70">
                 Time limit for each round (15-300 seconds, default: 60)
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-2">Skip Penalty</h3>
-              <p className="text-white/70 text-sm">
+              <h3 className="mb-2 font-semibold text-text">Skip Penalty</h3>
+              <p className="text-sm text-text/70">
                 Enable/disable point deduction for skipped words
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-2">Teams</h3>
-              <p className="text-white/70 text-sm">
+              <h3 className="mb-2 font-semibold text-text">Teams</h3>
+              <p className="text-sm text-text/70">
                 2-10 teams can play simultaneously
               </p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white/5 rounded-lg p-6">
-          <h2 className="text-2xl font-semibold text-[#ECACAE] mb-4">
-            🎨 Theme Management
+        <div className="rounded-game bg-text/[0.06] p-6">
+          <h2 className="mb-4 text-2xl font-semibold text-success">
+            Theme Management
           </h2>
-          <div className="space-y-3 text-white/80">
+          <div className="space-y-3 text-text/80">
             <p>
               <strong>Theme Creation:</strong> Create custom word themes with
               your own word lists
@@ -116,25 +106,25 @@ export default function Rules() {
           </div>
         </div>
 
-        <div className="bg-white/5 rounded-lg p-6">
-          <h2 className="text-2xl font-semibold text-[#ECACAE] mb-4">
-            📊 Game Features
+        <div className="rounded-game bg-text/[0.06] p-6">
+          <h2 className="mb-4 text-2xl font-semibold text-success">
+            Game Features
           </h2>
-          <div className="grid md:grid-cols-2 gap-4 text-white/80">
+          <div className="grid gap-4 text-text/80 md:grid-cols-2">
             <div>
-              <h3 className="font-semibold text-white mb-2">Game History</h3>
+              <h3 className="mb-2 font-semibold text-text">Game History</h3>
               <p className="text-sm">
                 View all completed games and track statistics
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-2">Game Resumption</h3>
+              <h3 className="mb-2 font-semibold text-text">Game Resumption</h3>
               <p className="text-sm">
                 Resume unfinished games from where you left off
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-2">
+              <h3 className="mb-2 font-semibold text-text">
                 Cheating Detection
               </h3>
               <p className="text-sm">
@@ -142,7 +132,7 @@ export default function Rules() {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-white mb-2">
+              <h3 className="mb-2 font-semibold text-text">
                 Result Confirmation
               </h3>
               <p className="text-sm">
@@ -152,45 +142,46 @@ export default function Rules() {
           </div>
         </div>
 
-        <div className="bg-white/5 rounded-lg p-6">
-          <h2 className="text-2xl font-semibold text-[#ECACAE] mb-4">
-            🎯 How to Play
+        <div className="rounded-game bg-text/[0.06] p-6">
+          <h2 className="mb-4 text-2xl font-semibold text-success">
+            How to Play
           </h2>
-          <ol className="list-decimal list-inside space-y-2 text-white/80">
+          <ol className="list-inside list-decimal space-y-2 text-text/80">
             <li>Choose a theme with words to guess</li>
             <li>Configure game settings (points, timer, teams)</li>
             <li>Take turns describing words to your team</li>
             <li>
-              Click "Guessed" for correct answers, "Skip" for difficult words
+              Click &quot;Guessed&quot; for correct answers, &quot;Skip&quot; for
+              difficult words
             </li>
             <li>Review and confirm results after each round</li>
             <li>Continue until a team reaches the target score</li>
           </ol>
         </div>
 
-        <div className="bg-white/5 rounded-lg p-6">
-          <h2 className="text-2xl font-semibold text-[#ECACAE] mb-4">
-            🏅 Difficulty Levels
+        <div className="rounded-game bg-text/[0.06] p-6">
+          <h2 className="mb-4 text-2xl font-semibold text-success">
+            Difficulty Levels
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-center">
-            <div className="bg-green-500/20 text-green-200 px-3 py-2 rounded">
+          <div className="grid grid-cols-2 gap-2 text-center md:grid-cols-5">
+            <div className="rounded-game bg-success/15 px-3 py-2 text-success">
               Very Easy
             </div>
-            <div className="bg-green-500/30 text-green-200 px-3 py-2 rounded">
+            <div className="rounded-game bg-success/25 px-3 py-2 text-success">
               Easy
             </div>
-            <div className="bg-yellow-500/30 text-yellow-200 px-3 py-2 rounded">
+            <div className="rounded-game bg-text/10 px-3 py-2 text-text">
               Medium
             </div>
-            <div className="bg-red-500/30 text-red-200 px-3 py-2 rounded">
+            <div className="rounded-game bg-error/20 px-3 py-2 text-error">
               Hard
             </div>
-            <div className="bg-red-500/20 text-red-200 px-3 py-2 rounded">
+            <div className="rounded-game bg-error/15 px-3 py-2 text-error">
               Very Hard
             </div>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

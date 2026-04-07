@@ -258,8 +258,8 @@ export default function ThemeSelection({
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-4xl w-full mx-auto">
-      <h1 className="text-3xl font-bold text-white mb-6 text-center">
+    <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-6 shadow-sm md:p-8">
+      <h1 className="mb-6 text-center text-3xl font-bold text-text">
         Select Theme
       </h1>
 
@@ -267,11 +267,11 @@ export default function ThemeSelection({
         {/* Row 1: Filtering */}
         <div className="flex flex-wrap gap-4 items-end justify-center">
           <div>
-            <label className="text-white/80 mb-2 block">Language</label>
+            <label className="mb-2 block text-text/80">Language</label>
             <select
               value={selectedLang}
               onChange={(e) => setSelectedLang(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
+              className="rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
             >
               <option value="en">English</option>
               <option value="ru">Russian</option>
@@ -279,7 +279,7 @@ export default function ThemeSelection({
           </div>
 
           <div>
-            <label className="text-white/80 mb-2 block">Difficulty</label>
+            <label className="mb-2 block text-text/80">Difficulty</label>
             <select
               value={selectedDifficulty || ""}
               onChange={(e) =>
@@ -287,7 +287,7 @@ export default function ThemeSelection({
                   e.target.value ? parseInt(e.target.value) : undefined,
                 )
               }
-              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
+              className="rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
             >
               <option value="">All</option>
               <option value="1">1 - Very Easy</option>
@@ -299,18 +299,19 @@ export default function ThemeSelection({
           </div>
 
           <div>
-            <label className="text-white/80 mb-2 block">Search</label>
+            <label className="mb-2 block text-text/80">Search</label>
             <div className="flex gap-2">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search themes..."
-                className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] placeholder-white/50"
+                className="rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-success"
               />
               <button
+                type="button"
                 onClick={fetchThemes}
-                className="px-4 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+                className="rounded-game bg-success px-4 py-2 font-semibold text-white transition hover:opacity-90"
               >
                 Search
               </button>
@@ -321,11 +322,11 @@ export default function ThemeSelection({
         {/* Row 2: Ordering */}
         <div className="flex flex-wrap gap-4 items-end justify-center">
           <div>
-            <label className="text-white/80 mb-2 block">Order By</label>
+            <label className="mb-2 block text-text/80">Order By</label>
             <select
               value={orderBy}
               onChange={(e) => setOrderBy(e.target.value as ThemeOrderByType)}
-              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
+              className="rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
             >
               <option value={ThemeOrderBy.ID}>Creation Date</option>
               <option value={ThemeOrderBy.NAME}>Name</option>
@@ -336,11 +337,11 @@ export default function ThemeSelection({
           </div>
 
           <div>
-            <label className="text-white/80 mb-2 block">Order Direction</label>
+            <label className="mb-2 block text-text/80">Order Direction</label>
             <select
               value={orderDescending ? "desc" : "asc"}
               onChange={(e) => setOrderDescending(e.target.value === "desc")}
-              className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
+              className="rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
             >
               <option value="asc">Ascending</option>
               <option value="desc">Descending</option>
@@ -359,7 +360,7 @@ export default function ThemeSelection({
                 onChange={(e) => setShowUnverified(e.target.checked)}
                 className="w-4 h-4"
               />
-              <label htmlFor="show-unverified" className="text-white/80">
+              <label htmlFor="show-unverified" className="text-text/80">
                 Show unverified themes
               </label>
             </div>
@@ -372,7 +373,7 @@ export default function ThemeSelection({
                 onChange={(e) => setOnlyMyThemes(e.target.checked)}
                 className="w-4 h-4"
               />
-              <label htmlFor="only-my-themes" className="text-white/80">
+              <label htmlFor="only-my-themes" className="text-text/80">
                 Only my themes
               </label>
             </div>
@@ -385,7 +386,7 @@ export default function ThemeSelection({
                 onChange={(e) => setOnlyFavorites(e.target.checked)}
                 className="w-4 h-4"
               />
-              <label htmlFor="only-favorites" className="text-white/80">
+              <label htmlFor="only-favorites" className="text-text/80">
                 Only favorites
               </label>
             </div>
@@ -395,16 +396,18 @@ export default function ThemeSelection({
         {/* Row 4: Action buttons */}
         <div className="flex flex-wrap gap-4 items-center justify-center">
           <button
+            type="button"
             onClick={() => setShowImportDialog(true)}
-            className="px-6 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+            className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
           >
             Import Theme
           </button>
 
           {user && (
             <button
+              type="button"
               onClick={() => onCreateTheme?.()}
-              className="px-6 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+              className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
             >
               Create Theme
             </button>
@@ -413,8 +416,8 @@ export default function ThemeSelection({
       </div>
 
       {showUnverified && (
-        <div className="mb-4 p-4 bg-yellow-500/20 border border-yellow-500/50 rounded-lg text-yellow-100 text-sm">
-          ⚠️ Unverified themes may contain inappropriate content
+        <div className="mb-4 rounded-game border border-text/20 bg-card p-4 text-sm text-text">
+          Unverified themes may contain inappropriate content
         </div>
       )}
 
@@ -439,13 +442,14 @@ export default function ThemeSelection({
                 handleThemeSelect(theme);
               }
             }}
-            className="p-4 bg-white/10 rounded-lg hover:bg-white/20 transition text-left"
+            type="button"
+            className="rounded-game border border-text/10 bg-text/[0.04] p-4 text-left transition hover:border-success/40 hover:bg-text/[0.08]"
           >
-            <h3 className="text-white font-semibold mb-2">{theme.name}</h3>
-            <p className="text-white/60 text-sm mb-1">
+            <h3 className="mb-2 font-semibold text-text">{theme.name}</h3>
+            <p className="mb-1 text-sm text-text/60">
               Difficulty: {renderDifficultyStars(theme.difficulty)}
             </p>
-            <p className="text-white/60 text-sm">
+            <p className="text-sm text-text/60">
               Status: {renderVerificationStatus(theme.verified)}
             </p>
           </button>
@@ -453,15 +457,15 @@ export default function ThemeSelection({
       </div>
 
       {themes.length === 0 && (
-        <p className="text-white/60 text-center py-8">
+        <p className="py-8 text-center text-text/60">
           No themes available. Import or Create a theme to get started.
         </p>
       )}
 
       {showImportDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#223164] border-2 border-[#ECACAE] rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-white mb-4">Import Theme</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-game border border-text/15 bg-card p-6 shadow-lg">
+            <h2 className="mb-4 text-2xl font-bold text-text">Import Theme</h2>
             <textarea
               value={importJson}
               onChange={(e) => {
@@ -491,25 +495,27 @@ Example format:
     ]
   }
 }`}
-              className="w-full h-64 p-4 bg-white/10 text-white rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#ECACAE] placeholder-white/60"
+              className="h-64 w-full rounded-game border border-text/15 bg-white p-4 font-mono text-sm text-text placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-success"
             />
             {importError && (
-              <p className="text-red-400 mt-2 text-sm">{importError}</p>
+              <p className="mt-2 text-sm text-error">{importError}</p>
             )}
-            <div className="flex gap-4 mt-4">
+            <div className="mt-4 flex gap-4">
               <button
+                type="button"
                 onClick={handleImport}
-                className="px-6 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+                className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
               >
                 Import
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setShowImportDialog(false);
                   setImportJson("");
                   setImportError("");
                 }}
-                className="px-6 py-2 bg-white/20 text-white rounded-lg font-semibold hover:opacity-90 transition"
+                className="rounded-game border border-text/15 bg-text/[0.06] px-6 py-2 font-semibold text-text transition hover:bg-text/10"
               >
                 Cancel
               </button>

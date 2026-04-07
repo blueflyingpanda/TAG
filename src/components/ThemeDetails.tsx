@@ -84,21 +84,22 @@ export default function ThemeDetails({
 
   if (loading) {
     return (
-      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-4xl w-full mx-auto">
-        <div className="text-center text-white">Loading theme details...</div>
+      <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-8 shadow-sm">
+        <div className="text-center text-text/80">Loading theme details...</div>
       </div>
     );
   }
 
   if (error || !theme) {
     return (
-      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-4xl w-full mx-auto">
-        <div className="text-center text-red-400 mb-4">
+      <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-8 shadow-sm">
+        <div className="mb-4 text-center text-error">
           {error || "Theme not found"}
         </div>
         <button
+          type="button"
           onClick={() => onBack(filters)}
-          className="px-6 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+          className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
         >
           Back
         </button>
@@ -107,25 +108,27 @@ export default function ThemeDetails({
   }
 
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-4xl w-full mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-6 shadow-sm md:p-8">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <button
+          type="button"
           onClick={() => onBack(filters)}
-          className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition"
+          className="rounded-game border border-text/15 bg-text/[0.06] px-4 py-2 font-semibold text-text transition hover:bg-text/10"
         >
           ← Back
         </button>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 md:gap-4">
           {user && (
             <button
+              type="button"
               onClick={handleToggleFavorite}
               disabled={isTogglingFavorite}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${
+              className={`flex items-center gap-2 rounded-game px-4 py-2 font-semibold transition ${
                 theme.is_favorited
-                  ? "bg-red-500 text-white hover:bg-red-600"
-                  : "bg-white/20 text-white hover:bg-white/30"
-              }`}
+                  ? "bg-error text-white hover:opacity-90"
+                  : "border border-text/15 bg-text/[0.06] text-text hover:bg-text/10"
+              } disabled:opacity-50`}
             >
               {theme.is_favorited ? "❤️" : "🤍"} {theme.likes_count || 0}
             </button>
@@ -133,8 +136,9 @@ export default function ThemeDetails({
 
           {onThemeSelect && (
             <button
+              type="button"
               onClick={() => onThemeSelect(theme)}
-              className="px-6 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+              className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
             >
               Select Theme
             </button>
@@ -144,31 +148,31 @@ export default function ThemeDetails({
 
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">{theme.name}</h1>
-          <div className="flex items-center gap-4 text-white/80">
+          <h1 className="mb-2 text-3xl font-bold text-text">{theme.name}</h1>
+          <div className="flex flex-wrap items-center gap-4 text-text/80">
             <span>Language: {theme.language.toUpperCase()}</span>
             <span>Difficulty: {renderDifficultyStars(theme.difficulty)}</span>
             <span>Status: {renderVerificationStatus(theme.verified)}</span>
             <span>Visibility: {theme.public ? "Public" : "Private"}</span>
           </div>
           {theme.creator && (
-            <div className="text-white/60 mt-2">
+            <div className="mt-2 text-text/60">
               Created by: {theme.creator.email}
             </div>
           )}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid gap-6 md:grid-cols-2">
           <div>
-            <h2 className="text-xl font-semibold text-white mb-4">
+            <h2 className="mb-4 text-xl font-semibold text-text">
               Teams ({theme.description.teams.length})
             </h2>
-            <div className="bg-white/10 rounded-lg p-4 max-h-64 overflow-y-auto">
+            <div className="max-h-64 overflow-y-auto rounded-game border border-text/10 bg-text/[0.04] p-4">
               <div className="grid grid-cols-2 gap-2">
                 {theme.description.teams.map((team, index) => (
                   <div
                     key={index}
-                    className="text-white/80 p-2 bg-white/5 rounded"
+                    className="rounded-game bg-card p-2 text-sm text-text/80"
                   >
                     {team}
                   </div>
@@ -178,21 +182,21 @@ export default function ThemeDetails({
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-white mb-4">
+            <h2 className="mb-4 text-xl font-semibold text-text">
               Words ({theme.description.words.length})
             </h2>
-            <div className="bg-white/10 rounded-lg p-4 max-h-64 overflow-y-auto">
+            <div className="max-h-64 overflow-y-auto rounded-game border border-text/10 bg-text/[0.04] p-4">
               <div className="grid grid-cols-3 gap-2">
                 {theme.description.words.slice(0, 50).map((word, index) => (
                   <div
                     key={index}
-                    className="text-white/80 p-2 bg-white/5 rounded text-sm"
+                    className="rounded-game bg-card p-2 text-sm text-text/80"
                   >
                     {word}
                   </div>
                 ))}
                 {theme.description.words.length > 50 && (
-                  <div className="text-white/60 p-2 text-sm col-span-3 text-center">
+                  <div className="col-span-3 p-2 text-center text-sm text-text/60">
                     ... and {theme.description.words.length - 50} more words
                   </div>
                 )}
@@ -202,11 +206,11 @@ export default function ThemeDetails({
         </div>
 
         {theme.played_count !== undefined && (
-          <div className="text-white/60">
+          <div className="text-text/60">
             Played {theme.played_count} times
             {theme.last_played &&
               ` • Last played: ${new Date(
-                theme.last_played
+                theme.last_played,
               ).toLocaleDateString()}`}
           </div>
         )}

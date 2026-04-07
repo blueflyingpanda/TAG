@@ -1,4 +1,4 @@
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import CreateTheme from "./components/CreateTheme";
 import GameHistory from "./components/GameHistory";
@@ -19,6 +19,8 @@ import {
   getCurrentUser,
 } from "./utils/oauth";
 import { storage } from "./utils/storage";
+
+const screenTransition = { ease: "easeInOut" as const, duration: 0.2 };
 
 type AppScreen =
   | "login"
@@ -415,8 +417,8 @@ function App() {
   return (
     <div
       className={`${
-        hideHeaderButtons ? "h-screen overflow-hidden p-2" : "min-h-screen p-4"
-      } w-full bg-[#223164] flex items-center justify-center`}
+        hideHeaderButtons ? "h-dvh overflow-hidden p-2" : "min-h-dvh p-4"
+      } w-full flex items-center justify-center bg-transparent`}
     >
       <div
         className={`w-full max-w-4xl mx-auto ${
@@ -424,29 +426,30 @@ function App() {
         }`}
       >
         {user && (
-          <div className="mb-4 text-white text-center">
+          <div className="mb-4 text-center text-text">
             <div className="flex items-center justify-center gap-4">
               {user.picture && (
                 <img
                   src={user.picture}
                   alt="Profile"
-                  className="w-8 h-8 rounded-full border-2 border-white/20"
+                  className="h-8 w-8 rounded-full border-2 border-text/15"
                 />
               )}
-              <div className="text-sm">{user.email}</div>
+              <div className="text-sm text-text/80">{user.email}</div>
             </div>
 
             {!hideHeaderButtons && (
-              <div className="mt-3 flex items-center justify-center gap-3">
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2 md:gap-3">
                 <button
+                  type="button"
                   onClick={() => {
                     setScreen("theme-selection");
                     setSelectedTheme(null);
                   }}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                  className={`rounded-game px-4 py-2 text-sm font-semibold transition md:text-base ${
                     screen === "theme-selection"
-                      ? "bg-white/20 text-white cursor-default"
-                      : "bg-[#ECACAE] text-[#223164] hover:opacity-90"
+                      ? "cursor-default bg-success text-white"
+                      : "border border-text/15 bg-card text-text shadow-sm hover:border-success/40"
                   }`}
                   disabled={screen === "theme-selection"}
                 >
@@ -454,11 +457,12 @@ function App() {
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setScreen("game-history")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                  className={`rounded-game px-4 py-2 text-sm font-semibold transition md:text-base ${
                     screen === "game-history"
-                      ? "bg-white/20 text-white cursor-default"
-                      : "bg-[#ECACAE] text-[#223164] hover:opacity-90"
+                      ? "cursor-default bg-success text-white"
+                      : "border border-text/15 bg-card text-text shadow-sm hover:border-success/40"
                   }`}
                   disabled={screen === "game-history"}
                 >
@@ -466,11 +470,12 @@ function App() {
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setScreen("rules")}
-                  className={`px-4 py-2 rounded-lg font-semibold transition ${
+                  className={`rounded-game px-4 py-2 text-sm font-semibold transition md:text-base ${
                     screen === "rules"
-                      ? "bg-white/20 text-white cursor-default"
-                      : "bg-[#ECACAE] text-[#223164] hover:opacity-90"
+                      ? "cursor-default bg-success text-white"
+                      : "border border-text/15 bg-card text-text shadow-sm hover:border-success/40"
                   }`}
                   disabled={screen === "rules"}
                 >
@@ -478,8 +483,9 @@ function App() {
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleLogout}
-                  className="px-4 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+                  className="rounded-game bg-error px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 md:text-base"
                 >
                   Logout
                 </button>
@@ -489,81 +495,91 @@ function App() {
         )}
 
         <AnimatePresence mode="wait">
-          {screen === "login" && <Login />}
-          {screen === "theme-selection" && user && (
-            <ThemeSelection
-              user={user}
-              onThemeSelect={handleThemeSelect}
-              onCreateTheme={() => setScreen("create-theme")}
-              onThemeDetails={(themeId, filters) => {
-                setSelectedThemeId(themeId);
-                setThemeFilters(filters || null);
-                setScreen("theme-details");
-              }}
-            />
-          )}
-          {screen === "theme-details" && user && selectedThemeId && (
-            <ThemeDetails
-              user={user}
-              themeId={selectedThemeId}
-              filters={themeFilters || undefined}
-              onBack={(filters) => {
-                // Restore filters to URL if provided
-                if (filters) {
-                  const url = new URL(window.location.href);
-                  url.search = filters.toString();
-                  window.history.replaceState({}, "", url.toString());
-                }
-                setScreen("theme-selection");
-              }}
-              onThemeSelect={handleThemeSelect}
-            />
-          )}
-          {screen === "create-theme" && user && (
-            <CreateTheme
-              user={user}
-              onBack={() => setScreen("theme-selection")}
-              onThemeCreated={(theme) => {
-                // Theme will be registered on backend (verified=false)
-                console.log("Theme created and registered:", theme);
-                setScreen("theme-selection");
-              }}
-            />
-          )}
-          {screen === "game-setup" && user && selectedTheme && (
-            <GameSetup
-              theme={selectedTheme}
-              onStart={handleGameStart}
-              onBack={() => setScreen("theme-selection")}
-            />
-          )}
-          {screen === "game-play" && user && gameState && (
-            <GamePlay
-              gameState={gameState}
-              setGameState={setGameState}
-              onRoundEnd={handleRoundEnd}
-              onGameEnd={handleGameEnd}
-            />
-          )}
-          {screen === "round-results" && user && gameState && (
-            <RoundResults
-              results={gameState.roundResults}
-              skipPenalty={Boolean(gameState.settings.skipPenalty)}
-              onConfirm={handleRoundResultsConfirm}
-            />
-          )}
-          {screen === "game-history" && user && (
-            <GameHistory
-              onBack={() => setScreen("theme-selection")}
-              onResumeGame={(gameState, gameId) => {
-                setGameId(gameId.toString());
-                localStorage.setItem("tag_current_game_id", gameId.toString());
-                setGameState(gameState);
-                setScreen("game-play");
-              }}
-            />
-          )}
-          {screen === "rules" && <Rules />}
+          <motion.div
+            key={screen}
+            className={hideHeaderButtons ? "h-full" : ""}
+            initial={{ scale: 0.97, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.97, opacity: 0 }}
+            transition={screenTransition}
+          >
+            {screen === "login" && <Login />}
+            {screen === "theme-selection" && user && (
+              <ThemeSelection
+                user={user}
+                onThemeSelect={handleThemeSelect}
+                onCreateTheme={() => setScreen("create-theme")}
+                onThemeDetails={(themeId, filters) => {
+                  setSelectedThemeId(themeId);
+                  setThemeFilters(filters || null);
+                  setScreen("theme-details");
+                }}
+              />
+            )}
+            {screen === "theme-details" && user && selectedThemeId && (
+              <ThemeDetails
+                user={user}
+                themeId={selectedThemeId}
+                filters={themeFilters || undefined}
+                onBack={(filters) => {
+                  if (filters) {
+                    const url = new URL(window.location.href);
+                    url.search = filters.toString();
+                    window.history.replaceState({}, "", url.toString());
+                  }
+                  setScreen("theme-selection");
+                }}
+                onThemeSelect={handleThemeSelect}
+              />
+            )}
+            {screen === "create-theme" && user && (
+              <CreateTheme
+                user={user}
+                onBack={() => setScreen("theme-selection")}
+                onThemeCreated={(theme) => {
+                  console.log("Theme created and registered:", theme);
+                  setScreen("theme-selection");
+                }}
+              />
+            )}
+            {screen === "game-setup" && user && selectedTheme && (
+              <GameSetup
+                theme={selectedTheme}
+                onStart={handleGameStart}
+                onBack={() => setScreen("theme-selection")}
+              />
+            )}
+            {screen === "game-play" && user && gameState && (
+              <GamePlay
+                gameState={gameState}
+                setGameState={setGameState}
+                onRoundEnd={handleRoundEnd}
+                onGameEnd={handleGameEnd}
+              />
+            )}
+            {screen === "round-results" && user && gameState && (
+              <RoundResults
+                results={gameState.roundResults}
+                skipPenalty={Boolean(gameState.settings.skipPenalty)}
+                onConfirm={handleRoundResultsConfirm}
+              />
+            )}
+            {screen === "game-history" && user && (
+              <GameHistory
+                onBack={() => setScreen("theme-selection")}
+                onResumeGame={(gameState, gameId) => {
+                  setGameId(gameId.toString());
+                  localStorage.setItem(
+                    "tag_current_game_id",
+                    gameId.toString(),
+                  );
+                  setGameState(gameState);
+                  setScreen("game-play");
+                }}
+              />
+            )}
+            {screen === "rules" && <Rules />}
+          </motion.div>
         </AnimatePresence>
       </div>
     </div>

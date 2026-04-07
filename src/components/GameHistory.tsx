@@ -18,14 +18,13 @@ export default function GameHistory({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedGame, setSelectedGame] = useState<GameDetailsResponse | null>(
-    null
+    null,
   );
 
   useEffect(() => {
     const fetchGames = async () => {
       setIsLoading(true);
       try {
-        // Get all games (both ended and ongoing), ordered by creation date descending
         const response = await getGames(
           1,
           50,
@@ -33,7 +32,7 @@ export default function GameHistory({
           undefined,
           undefined,
           "id",
-          true
+          true,
         );
         setGames(response.items);
       } catch (err) {
@@ -55,30 +54,26 @@ export default function GameHistory({
     if (onViewGameDetails) {
       onViewGameDetails(game.id);
     } else {
-      // Fallback: load game details inline
       try {
         const gameDetails = await getGame(game.id);
         setSelectedGame(gameDetails);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to load game details"
+          err instanceof Error ? err.message : "Failed to load game details",
         );
       }
     }
   };
 
   const handleResumeGame = async (game: GameDetailsResponse) => {
-    // Check if we have the required data to resume the game
     if (!game.info?.teams || game.info.teams.length === 0) {
       setError("Cannot resume game: missing teams data");
       return;
     }
 
     try {
-      // Fetch the full theme data including words
       const fullTheme = await getTheme(game.theme_id);
 
-      // Convert API game data to local GameState format
       const gameState: GameState = {
         settings: {
           theme: fullTheme,
@@ -90,14 +85,14 @@ export default function GameHistory({
         currentTeamIndex: game.info.current_team_index || 0,
         currentRound: game.info.current_round || game.round,
         teamScores: Object.fromEntries(
-          game.info.teams.map((team) => [team.name, team.score])
+          game.info.teams.map((team) => [team.name, team.score]),
         ),
         wordsUsed: [...game.words_guessed, ...game.words_skipped],
         currentWordIndex: game.words_guessed.length + game.words_skipped.length,
         roundStartTime: null,
         roundEndTime: null,
-        isRoundActive: false, // API doesn't track this
-        isPaused: false, // Default to not paused for resumed games
+        isRoundActive: false,
+        isPaused: false,
         roundResults: [
           ...game.words_guessed.map((word) => ({ word, guessed: true })),
           ...game.words_skipped.map((word) => ({ word, guessed: false })),
@@ -107,7 +102,7 @@ export default function GameHistory({
       onResumeGame(gameState, game.id);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to load theme data"
+        err instanceof Error ? err.message : "Failed to load theme data",
       );
     }
   };
@@ -118,11 +113,12 @@ export default function GameHistory({
 
   if (selectedGame) {
     return (
-      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-4xl w-full mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-6 shadow-sm md:p-8">
+        <div className="mb-6 flex items-center justify-between">
           <button
+            type="button"
             onClick={handleBackToList}
-            className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition"
+            className="rounded-game border border-text/15 bg-text/[0.06] px-4 py-2 font-semibold text-text transition hover:bg-text/10"
           >
             ← Back to Games
           </button>
@@ -130,8 +126,8 @@ export default function GameHistory({
 
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Game Details</h1>
-            <div className="flex items-center gap-4 text-white/80">
+            <h1 className="mb-2 text-3xl font-bold text-text">Game Details</h1>
+            <div className="flex flex-wrap items-center gap-4 text-text/80">
               <span>Theme: {selectedGame.theme.name}</span>
               <span>Language: {selectedGame.theme.language.toUpperCase()}</span>
               <span>Points Required: {selectedGame.points}</span>
@@ -139,7 +135,7 @@ export default function GameHistory({
                 Skip Penalty: {selectedGame.skip_penalty ? "Yes" : "No"}
               </span>
             </div>
-            <div className="text-white/60 mt-2">
+            <div className="mt-2 text-text/60">
               Started: {formatDate(selectedGame.started_at)}
               {selectedGame.ended_at && (
                 <span className="ml-4">
@@ -149,33 +145,33 @@ export default function GameHistory({
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <h2 className="text-xl font-semibold text-white mb-4">Teams</h2>
-              <div className="bg-white/10 rounded-lg p-4">
+              <h2 className="mb-4 text-xl font-semibold text-text">Teams</h2>
+              <div className="rounded-game border border-text/10 bg-text/[0.04] p-4">
                 {selectedGame.info?.teams &&
                 selectedGame.info.teams.length > 0 ? (
                   selectedGame.info.teams.map((team, index) => (
-                    <div key={index} className="text-white/80 mb-2">
+                    <div key={index} className="mb-2 text-text/80">
                       {team.name}: {team.score} points
                     </div>
                   ))
                 ) : (
-                  <div className="text-white/60">No teams data available</div>
+                  <div className="text-text/60">No teams data available</div>
                 )}
               </div>
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold text-white mb-4">
+              <h2 className="mb-4 text-xl font-semibold text-text">
                 Game Status
               </h2>
-              <div className="bg-white/10 rounded-lg p-4">
-                <div className="text-white/80 mb-2">
+              <div className="rounded-game border border-text/10 bg-text/[0.04] p-4">
+                <div className="mb-2 text-text/80">
                   Current Round:{" "}
                   {selectedGame.info?.current_round || selectedGame.round}
                 </div>
-                <div className="text-white/80 mb-2">
+                <div className="mb-2 text-text/80">
                   Current Team:{" "}
                   {selectedGame.info?.teams &&
                   selectedGame.info.current_team_index !== undefined
@@ -184,7 +180,7 @@ export default function GameHistory({
                       ]?.name || "Unknown"
                     : "Unknown"}
                 </div>
-                <div className="text-white/80 mb-2">
+                <div className="mb-2 text-text/80">
                   Status: {selectedGame.ended_at ? "Completed" : "In Progress"}
                 </div>
               </div>
@@ -194,8 +190,9 @@ export default function GameHistory({
           {!selectedGame.ended_at && (
             <div className="flex justify-center">
               <button
+                type="button"
                 onClick={() => handleResumeGame(selectedGame)}
-                className="px-6 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+                className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
               >
                 Resume Game
               </button>
@@ -208,19 +205,20 @@ export default function GameHistory({
 
   if (isLoading) {
     return (
-      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-4xl w-full mx-auto">
-        <div className="text-center text-white">Loading game history...</div>
+      <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-8 shadow-sm">
+        <div className="text-center text-text/80">Loading game history...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-4xl w-full mx-auto">
-        <div className="text-center text-red-400 mb-4">{error}</div>
+      <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-8 shadow-sm">
+        <div className="mb-4 text-center text-error">{error}</div>
         <button
+          type="button"
           onClick={onBack}
-          className="px-6 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+          className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
         >
           Back
         </button>
@@ -229,19 +227,20 @@ export default function GameHistory({
   }
 
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-4xl w-full mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-white">Game History</h1>
+    <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-6 shadow-sm md:p-8">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold text-text">Game History</h1>
         <button
+          type="button"
           onClick={onBack}
-          className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition"
+          className="rounded-game border border-text/15 bg-text/[0.06] px-4 py-2 font-semibold text-text transition hover:bg-text/10"
         >
           ← Back
         </button>
       </div>
 
       {games.length === 0 ? (
-        <p className="text-white/60 text-center py-8">
+        <p className="py-8 text-center text-text/60">
           No games found. Start playing to see your game history!
         </p>
       ) : (
@@ -249,18 +248,26 @@ export default function GameHistory({
           {games.map((game) => (
             <div
               key={game.id}
-              className="bg-white/10 rounded-lg p-4 hover:bg-white/20 transition cursor-pointer"
+              role="button"
+              tabIndex={0}
+              className="cursor-pointer rounded-game border border-text/10 bg-text/[0.04] p-4 transition hover:border-success/40 hover:bg-text/[0.07]"
               onClick={() => handleViewDetails(game)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleViewDetails(game);
+                }
+              }}
             >
-              <div className="flex justify-between items-start">
+              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                 <div>
-                  <h3 className="text-white font-semibold mb-2">
+                  <h3 className="mb-2 font-semibold text-text">
                     {game.theme.name}
                   </h3>
-                  <div className="text-white/60 text-sm mb-2">
+                  <div className="mb-2 text-sm text-text/60">
                     Language: {game.theme.language.toUpperCase()}
                   </div>
-                  <div className="text-white/60 text-sm">
+                  <div className="text-sm text-text/60">
                     Started: {formatDate(game.started_at)}
                     {game.ended_at && (
                       <span className="ml-4">
@@ -269,19 +276,19 @@ export default function GameHistory({
                     )}
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-white/80 text-sm">
+                <div className="text-left sm:text-right">
+                  <div className="text-sm text-text/80">
                     Points Required: {game.points}
                   </div>
-                  <div className="text-white/80 text-sm">
+                  <div className="text-sm text-text/80">
                     Round Time: {game.round}
                   </div>
-                  <div className="text-white/80 text-sm">
+                  <div className="text-sm text-text/80">
                     Skip Penalty: {game.skip_penalty ? "Yes" : "No"}
                   </div>
                   <div
                     className={`text-sm ${
-                      game.ended_at ? "text-green-400" : "text-yellow-400"
+                      game.ended_at ? "text-success" : "text-error"
                     }`}
                   >
                     {game.ended_at ? "Completed" : "In Progress"}

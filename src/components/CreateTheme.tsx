@@ -200,30 +200,33 @@ export default function CreateTheme({
     setWords([...words.filter((w) => w.trim()), ...imported]);
   };
 
+  const inputClass =
+    "w-full rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success";
+
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-4xl w-full mx-auto max-h-[90vh] overflow-y-auto">
-      <h1 className="text-3xl font-bold text-white mb-6 text-center">
+    <div className="mx-auto max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-game bg-card p-6 shadow-sm md:p-8">
+      <h1 className="mb-6 text-center text-3xl font-bold text-text">
         Create Theme
       </h1>
-      <p className="text-white/60 text-sm mb-6 text-center">
+      <p className="mb-6 text-center text-sm text-text/60">
         New themes will be marked as unverified until admin review
       </p>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-100 text-sm">
+        <div className="mb-4 rounded-game border border-error/40 bg-error/10 p-4 text-sm text-error">
           {error}
         </div>
       )}
 
       <div className="space-y-6">
         <div>
-          <label className="text-white font-semibold mb-2 block">
+          <label className="mb-2 block font-semibold text-text">
             Language *
           </label>
           <select
             value={lang}
             onChange={(e) => setLang(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
+            className={inputClass}
           >
             <option value="en">English</option>
             <option value="ru">Russian</option>
@@ -231,13 +234,13 @@ export default function CreateTheme({
         </div>
 
         <div>
-          <label className="text-white font-semibold mb-2 block">
+          <label className="mb-2 block font-semibold text-text">
             Difficulty *
           </label>
           <select
             value={difficulty}
             onChange={(e) => setDifficulty(parseInt(e.target.value))}
-            className="w-full px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] [&>option]:bg-[#223164] [&>option]:text-white"
+            className={inputClass}
           >
             <option value={1}>1 - Very Easy</option>
             <option value={2}>2 - Easy</option>
@@ -248,23 +251,23 @@ export default function CreateTheme({
         </div>
 
         <div>
-          <label className="text-white font-semibold mb-2 block">Public</label>
+          <label className="mb-2 block font-semibold text-text">Public</label>
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="is-public"
               checked={isPublic}
               onChange={(e) => setIsPublic(e.target.checked)}
-              className="w-4 h-4"
+              className="h-4 w-4 accent-success"
             />
-            <label htmlFor="is-public" className="text-white/80">
+            <label htmlFor="is-public" className="text-text/80">
               Make this theme public
             </label>
           </div>
         </div>
 
         <div>
-          <label className="text-white font-semibold mb-2 block">
+          <label className="mb-2 block font-semibold text-text">
             Theme Name * (max 64 chars, max 10 words)
           </label>
           <input
@@ -272,10 +275,10 @@ export default function CreateTheme({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g., Harry Potter"
-            className="w-full px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
+            className={inputClass}
             maxLength={64}
           />
-          <p className="text-white/60 text-xs mt-1">
+          <p className="mt-1 text-xs text-text/60">
             {name.length}/64 characters •{" "}
             {
               name
@@ -288,24 +291,25 @@ export default function CreateTheme({
         </div>
 
         <div>
-          <label className="text-white font-semibold mb-2 block">
+          <label className="mb-2 block font-semibold text-text">
             Teams * (exactly 10 teams, each max 64 chars, max 10 words)
           </label>
           {teams.map((team, index) => (
-            <div key={index} className="flex gap-2 mb-2">
+            <div key={index} className="mb-2 flex gap-2">
               <input
                 id={`team-input-${index}`}
                 type="text"
                 value={team}
                 onChange={(e) => updateTeam(index, e.target.value)}
                 placeholder={`Team ${index + 1}`}
-                className="flex-1 px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE]"
+                className={`flex-1 ${inputClass}`}
                 maxLength={64}
               />
               {teams.length > 1 && (
                 <button
+                  type="button"
                   onClick={() => removeTeam(index)}
-                  className="px-4 py-2 bg-red-500/20 text-red-200 rounded-lg hover:bg-red-500/30 transition"
+                  className="rounded-game border border-error/30 bg-error/10 px-4 py-2 text-sm font-semibold text-error transition hover:bg-error/20"
                 >
                   Remove
                 </button>
@@ -314,40 +318,42 @@ export default function CreateTheme({
           ))}
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={addTeam}
-              className="mt-2 px-4 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50"
+              className="mt-2 rounded-game bg-success px-4 py-2 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={teams.length >= 10}
             >
               + Add Team
             </button>
-            <span className="text-white/60 text-sm">
+            <span className="text-sm text-text/60">
               {teams.filter((t) => t.trim()).length} filled • {teams.length}{" "}
               entries • 10 required
             </span>
           </div>
           {teams.filter((t) => t.trim()).length !== 10 && (
-            <p className="text-yellow-300 text-sm mt-2">
+            <p className="mt-2 text-sm text-error">
               You must provide exactly 10 filled team names to create a theme.
             </p>
           )}
         </div>
 
         <div>
-          <label className="text-white font-semibold mb-2 block">
+          <label className="mb-2 block font-semibold text-text">
             Words * (min 100, each max 64 chars, max 10 words)
           </label>
           <div className="mb-2">
             <button
+              type="button"
               onClick={() => {
                 const text = prompt("Paste words (one per line):");
                 if (text) importWords(text);
               }}
-              className="px-4 py-2 bg-white/20 text-white rounded-lg font-semibold hover:bg-white/30 transition text-sm"
+              className="rounded-game border border-text/15 bg-text/[0.06] px-4 py-2 text-sm font-semibold text-text transition hover:bg-text/10"
             >
               Import from Text (one per line)
             </button>
           </div>
-          <div className="max-h-64 overflow-y-auto space-y-2 mb-2">
+          <div className="mb-2 max-h-64 space-y-2 overflow-y-auto">
             {words.map((word, index) => (
               <div key={index} className="flex gap-2">
                 <input
@@ -355,26 +361,28 @@ export default function CreateTheme({
                   value={word}
                   onChange={(e) => updateWord(index, e.target.value)}
                   placeholder={`Word ${index + 1}`}
-                  className="flex-1 px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-[#ECACAE] text-sm"
+                  className={`flex-1 text-sm ${inputClass}`}
                   maxLength={64}
                 />
                 <button
+                  type="button"
                   onClick={() => removeWord(index)}
-                  className="px-3 py-2 bg-red-500/20 text-red-200 rounded-lg hover:bg-red-500/30 transition text-sm"
+                  className="rounded-game border border-error/30 bg-error/10 px-3 py-2 text-sm font-semibold text-error transition hover:bg-error/20"
                 >
                   ×
                 </button>
               </div>
             ))}
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={addWord}
-              className="px-4 py-2 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition"
+              className="rounded-game bg-success px-4 py-2 font-semibold text-white transition hover:opacity-90"
             >
               + Add Word
             </button>
-            <span className="text-white/60 text-sm">
+            <span className="text-sm text-text/60">
               {words.filter((w) => w.trim()).length} / 100 words (minimum)
             </span>
           </div>
@@ -382,16 +390,18 @@ export default function CreateTheme({
 
         <div className="flex gap-4 pt-4">
           <button
+            type="button"
             onClick={onBack}
-            className="flex-1 px-6 py-3 bg-white/20 text-white rounded-lg font-semibold hover:opacity-90 transition"
+            className="flex-1 rounded-game border border-text/15 bg-text/[0.06] px-6 py-3 font-semibold text-text transition hover:bg-text/10 disabled:opacity-50"
             disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex-1 px-6 py-3 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50"
+            className="flex-1 rounded-game bg-success px-6 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? "Submitting..." : "Create Theme"}
           </button>

@@ -8,38 +8,65 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
   margin: 0;
   padding: 0;
 }
 
+:root {
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
 html {
-  background-color: #223164;
+  background-color: #e7d0a4;
+  background-image: radial-gradient(
+    circle at 85.54% 7.65%,
+    #fdecc7 0,
+    #f2deb5 50%,
+    #e7d0a4 100%
+  );
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background-color: #223164;
-  color: #ffffff;
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  color: #222;
   overflow-x: hidden;
   min-height: 100vh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  background-image: radial-gradient(
+    circle at 85.54% 7.65%,
+    #fdecc7 0,
+    #f2deb5 50%,
+    #e7d0a4 100%
+  );
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
-  background-color: #223164;
+  background: transparent;
 }
 
-/* Fix dropdown options styling on Windows */
-select option {
-  background-color: #223164 !important;
-  color: #ffffff !important;
+button {
+  cursor: pointer;
 }
 
-/* Ensure select elements have proper styling */
+/* Light-theme selects */
 select {
-  color-scheme: dark;
+  color-scheme: light;
+}
+
+select option {
+  background-color: #fcfff7 !important;
+  color: #222 !important;
 }

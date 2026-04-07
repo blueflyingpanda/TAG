@@ -14,7 +14,6 @@ export default function RoundResults({
 }: RoundResultsProps) {
   const [finalResults, setFinalResults] = useState(results);
 
-  // Update finalResults when results prop changes
   useEffect(() => {
     setFinalResults(results);
   }, [results]);
@@ -34,8 +33,6 @@ export default function RoundResults({
   const [pulse, setPulse] = useState(false);
 
   useEffect(() => {
-    // trigger a small scale pulse when earned changes
-    // schedule the state update to avoid synchronous setState in effect
     const start = setTimeout(() => setPulse(true), 0);
     const end = setTimeout(() => setPulse(false), 300);
     return () => {
@@ -46,7 +43,7 @@ export default function RoundResults({
 
   return (
     <motion.div
-      className="fixed inset-0 bg-gradient-to-br from-[#223164] via-[#1a2651] to-[#223164] flex flex-col p-4"
+      className="fixed inset-0 flex flex-col bg-transparent p-4"
       initial={{ y: "100vh", opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: "100vh", opacity: 0 }}
@@ -57,17 +54,16 @@ export default function RoundResults({
         duration: 0.6,
       }}
     >
-      {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto pb-20">
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 shadow-xl max-w-2xl w-full mx-auto">
-          <h1 className="text-3xl font-bold text-white mb-2 text-center">
+        <div className="mx-auto w-full max-w-2xl rounded-game bg-card p-6 shadow-sm md:p-8">
+          <h1 className="mb-2 text-center text-3xl font-bold text-text">
             Round Results
           </h1>
-          <p className="text-white/60 mb-6 text-center">
+          <p className="mb-6 text-center text-text/60">
             Tap words to toggle between ✅ and ❌
           </p>
           {results.length === 0 && (
-            <p className="text-white/60 text-center mb-6">
+            <p className="mb-6 text-center text-text/60">
               No words were processed in this round.
             </p>
           )}
@@ -75,7 +71,7 @@ export default function RoundResults({
           <div className="mb-6 flex justify-center gap-6">
             <div className="text-center">
               <motion.div
-                className="text-2xl font-bold text-green-400"
+                className="text-2xl font-bold text-success"
                 key={guessedCount}
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -83,16 +79,16 @@ export default function RoundResults({
               >
                 {guessedCount}
               </motion.div>
-              <div className="text-white/60 text-sm">Guessed</div>
+              <div className="text-sm text-text/60">Guessed</div>
             </div>
             <div className="text-center">
               <motion.div
                 className={`text-2xl font-bold ${
                   earned > 0
-                    ? "text-yellow-300"
+                    ? "text-success"
                     : earned < 0
-                      ? "text-red-300"
-                      : "text-white/80"
+                      ? "text-error"
+                      : "text-text/80"
                 }`}
                 key={earned}
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -106,11 +102,11 @@ export default function RoundResults({
               >
                 ⭐ {earned}
               </motion.div>
-              <div className="text-white/60 text-sm">Earned</div>
+              <div className="text-sm text-text/60">Earned</div>
             </div>
             <div className="text-center">
               <motion.div
-                className="text-2xl font-bold text-red-400"
+                className="text-2xl font-bold text-error"
                 key={skippedCount}
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -118,7 +114,7 @@ export default function RoundResults({
               >
                 {skippedCount}
               </motion.div>
-              <div className="text-white/60 text-sm">Skipped</div>
+              <div className="text-sm text-text/60">Skipped</div>
             </div>
           </div>
 
@@ -126,12 +122,13 @@ export default function RoundResults({
             {finalResults.map((result, index) => (
               <button
                 key={index}
+                type="button"
                 onClick={() => toggleWord(index)}
-                className={`w-full p-4 rounded-lg text-left transition ${
+                className={`w-full rounded-game p-4 text-left transition hover:opacity-90 ${
                   result.guessed
-                    ? "bg-green-500/20 text-green-200"
-                    : "bg-red-500/20 text-red-200"
-                } hover:opacity-80`}
+                    ? "border border-success/30 bg-success/15 text-text"
+                    : "border border-error/30 bg-error/10 text-text"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">{result.word}</span>
@@ -145,11 +142,11 @@ export default function RoundResults({
         </div>
       </div>
 
-      {/* Fixed Button at Bottom */}
-      <div className="fixed bottom-4 left-0 right-0 flex justify-center pointer-events-none">
+      <div className="pointer-events-none fixed bottom-4 left-0 right-0 flex justify-center">
         <button
+          type="button"
           onClick={() => onConfirm(finalResults)}
-          className="px-6 py-3 bg-[#ECACAE] text-[#223164] rounded-lg font-semibold hover:opacity-90 transition pointer-events-auto"
+          className="pointer-events-auto rounded-game bg-success px-6 py-3 font-semibold text-white shadow-sm transition hover:opacity-90"
         >
           Confirm
         </button>
