@@ -1,7 +1,18 @@
 import type { GameSettings, GameState, Theme } from '../types';
 
-export const getAvailableWords = (theme: Theme, wordsUsed: string[]): string[] => {
-  return theme.description.words.filter((word) => !wordsUsed.includes(word));
+export const getAvailableWords = (
+  theme: Theme,
+  wordsUsed: string[],
+  maxDifficulty: number,
+): string[] => {
+  return Object.entries(theme.description.words)
+    .filter(
+      ([word, meta]) =>
+        !wordsUsed.includes(word) &&
+        typeof meta.difficulty === 'number' &&
+        meta.difficulty <= maxDifficulty,
+    )
+    .map(([word]) => word);
 };
 
 export const shuffleArray = <T>(array: T[]): T[] => {

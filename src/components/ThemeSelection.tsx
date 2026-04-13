@@ -5,15 +5,9 @@ import { createTheme, getTheme, getThemes } from "../utils/themes";
 
 interface ThemeSelectionProps {
   user: User | null;
-  onThemeSelect: (theme: Theme) => void;
+  onThemeSelect: (theme: Theme, difficulty?: number) => void;
   onCreateTheme?: () => void;
   onThemeDetails?: (themeId: number, filters?: URLSearchParams) => void;
-}
-
-function renderDifficultyStars(difficulty: number): string {
-  const stars = "⭐".repeat(difficulty);
-  const emptyStars = "☆".repeat(5 - difficulty);
-  return stars + emptyStars;
 }
 
 function renderVerificationStatus(verified: boolean): string {
@@ -23,7 +17,6 @@ function renderVerificationStatus(verified: boolean): string {
 // URL parameter management
 function getFiltersFromURL(): {
   selectedLang: string;
-  selectedDifficulty: number | undefined;
   searchTerm: string;
   orderBy: ThemeOrderByType;
   orderDescending: boolean;
@@ -35,9 +28,6 @@ function getFiltersFromURL(): {
 
   return {
     selectedLang: urlParams.get("lang") || "en",
-    selectedDifficulty: urlParams.get("difficulty")
-      ? parseInt(urlParams.get("difficulty")!)
-      : undefined,
     searchTerm: urlParams.get("search") || "",
     orderBy: (urlParams.get("order") as ThemeOrderByType) || ThemeOrderBy.ID,
     orderDescending: urlParams.get("descending") === "true",
@@ -49,7 +39,6 @@ function getFiltersFromURL(): {
 
 function updateURLWithFilters(filters: {
   selectedLang: string;
-  selectedDifficulty: number | undefined;
   searchTerm: string;
   orderBy: ThemeOrderByType;
   orderDescending: boolean;
@@ -65,8 +54,6 @@ function updateURLWithFilters(filters: {
   // Set new params
   if (filters.selectedLang !== "en")
     url.searchParams.set("lang", filters.selectedLang);
-  if (filters.selectedDifficulty)
-    url.searchParams.set("difficulty", filters.selectedDifficulty.toString());
   if (filters.searchTerm) url.searchParams.set("search", filters.searchTerm);
   if (filters.orderBy !== ThemeOrderBy.ID)
     url.searchParams.set("order", filters.orderBy);
@@ -90,9 +77,6 @@ export default function ThemeSelection({
 
   const [themes, setThemes] = useState<ThemeListItem[]>([]);
   const [selectedLang, setSelectedLang] = useState(initialFilters.selectedLang);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<
-    number | undefined
-  >(initialFilters.selectedDifficulty);
   const [onlyMyThemes, setOnlyMyThemes] = useState(initialFilters.onlyMyThemes);
   const [onlyFavorites, setOnlyFavorites] = useState(
     initialFilters.onlyFavorites,
@@ -104,6 +88,7 @@ export default function ThemeSelection({
   const [searchTerm, setSearchTerm] = useState(initialFilters.searchTerm);
   const [importJson, setImportJson] = useState("");
   const [importError, setImportError] = useState("");
+  const [importIsPublic, setImportIsPublic] = useState(true);
   const [orderBy, setOrderBy] = useState<ThemeOrderByType>(
     initialFilters.orderBy,
   );
@@ -117,7 +102,6 @@ export default function ThemeSelection({
         1,
         50,
         selectedLang,
-        selectedDifficulty,
         searchTerm || undefined,
         onlyMyThemes,
         showUnverified ? false : undefined, // verified - false when showing unverified, undefined otherwise
@@ -135,7 +119,6 @@ export default function ThemeSelection({
     fetchThemes();
   }, [
     selectedLang,
-    selectedDifficulty,
     onlyMyThemes,
     onlyFavorites,
     showUnverified,
@@ -147,7 +130,6 @@ export default function ThemeSelection({
   useEffect(() => {
     updateURLWithFilters({
       selectedLang,
-      selectedDifficulty,
       searchTerm,
       orderBy,
       orderDescending,
@@ -157,7 +139,6 @@ export default function ThemeSelection({
     });
   }, [
     selectedLang,
-    selectedDifficulty,
     searchTerm,
     orderBy,
     orderDescending,
@@ -184,23 +165,37 @@ export default function ThemeSelection({
       if (
         !themeData.name ||
         !themeData.language ||
-        typeof themeData.difficulty !== "number" ||
         !themeData.description ||
         !Array.isArray(themeData.description.teams) ||
-        !Array.isArray(themeData.description.words)
+        (!Array.isArray(themeData.description.words) &&
+          typeof themeData.description.words !== "object")
       ) {
         throw new Error(
-          "Invalid theme format. Expected API format with name, language, difficulty, and description object",
+          "Invalid theme format. Expected API format with name, language, and description object",
         );
       }
 
-      // Set default public to true if not specified
-      if (themeData.public === undefined) {
-        themeData.public = true;
+      // Normalize word format to API dictionary shape
+      const rawWords = themeData.description.words;
+      let wordsMap: Record<string, { difficulty: number }>;
+
+      if (Array.isArray(rawWords)) {
+        wordsMap = Object.fromEntries(
+          rawWords.map((word: any) => [String(word).trim(), { difficulty: 1 }]),
+        );
+      } else {
+        wordsMap = Object.fromEntries(
+          Object.entries(rawWords as Record<string, any>).map(
+            ([word, meta]) => {
+              const difficulty = meta?.difficulty ?? 1;
+              return [String(word).trim(), { difficulty }];
+            },
+          ),
+        );
       }
 
-      if (themeData.description.words.length < 100) {
-        throw new Error("Theme must have at least 100 words");
+      if (Object.keys(wordsMap).length < 30) {
+        throw new Error("Theme must have at least 30 words");
       }
 
       // Enforce exactly 10 teams
@@ -226,29 +221,40 @@ export default function ThemeSelection({
       }
 
       // Ensure words are unique
-      const wordValues = themeData.description.words.map((w: any) =>
-        String(w).trim().toLowerCase(),
-      );
+      const wordValues = Array.isArray(rawWords)
+        ? rawWords.map((w: any) => String(w).trim().toLowerCase())
+        : Object.keys(rawWords).map((w) => String(w).trim().toLowerCase());
       const uniqueWords = new Set(wordValues);
       if (uniqueWords.size !== wordValues.length) {
-        const duplicates = themeData.description.words.filter(
-          (w: any, index: number) =>
-            wordValues.indexOf(String(w).trim().toLowerCase()) !== index,
+        const duplicates = wordValues.filter(
+          (word, index) => wordValues.indexOf(word) !== index,
         );
         throw new Error(
-          `Words must be unique within a theme. Duplicates found: ${duplicates
+          `Words must be unique within a theme. Duplicates found: ${[
+            ...new Set(duplicates),
+          ]
             .slice(0, 5)
-            .map((w: any) => `"${w}"`)
+            .map((w) => `"${w}"`)
             .join(", ")}${duplicates.length > 5 ? "..." : ""}`,
         );
       }
 
+      const payload = {
+        ...themeData,
+        public: importIsPublic,
+        description: {
+          teams: themeData.description.teams.map((t: any) => String(t).trim()),
+          words: wordsMap,
+        },
+      };
+
       // Create theme via API
-      await createTheme(themeData);
+      await createTheme(payload);
 
       setShowImportDialog(false);
       setImportJson("");
       setImportError("");
+      setImportIsPublic(true);
 
       // Optionally refresh the theme list
       fetchThemes();
@@ -275,26 +281,6 @@ export default function ThemeSelection({
             >
               <option value="en">English</option>
               <option value="ru">Russian</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-text/80">Difficulty</label>
-            <select
-              value={selectedDifficulty || ""}
-              onChange={(e) =>
-                setSelectedDifficulty(
-                  e.target.value ? parseInt(e.target.value) : undefined,
-                )
-              }
-              className="rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
-            >
-              <option value="">All</option>
-              <option value="1">1 - Very Easy</option>
-              <option value="2">2 - Easy</option>
-              <option value="3">3 - Medium</option>
-              <option value="4">4 - Hard</option>
-              <option value="5">5 - Very Hard</option>
             </select>
           </div>
 
@@ -330,8 +316,6 @@ export default function ThemeSelection({
             >
               <option value={ThemeOrderBy.ID}>Creation Date</option>
               <option value={ThemeOrderBy.NAME}>Name</option>
-              <option value={ThemeOrderBy.PLAYED_COUNT}>Popularity</option>
-              <option value={ThemeOrderBy.LAST_PLAYED}>Last Played</option>
               <option value={ThemeOrderBy.LIKES}>Likes</option>
             </select>
           </div>
@@ -429,8 +413,6 @@ export default function ThemeSelection({
               if (onThemeDetails) {
                 const filters = new URLSearchParams();
                 if (selectedLang !== "en") filters.set("lang", selectedLang);
-                if (selectedDifficulty)
-                  filters.set("difficulty", selectedDifficulty.toString());
                 if (searchTerm) filters.set("search", searchTerm);
                 if (orderBy !== ThemeOrderBy.ID) filters.set("order", orderBy);
                 if (orderDescending) filters.set("descending", "true");
@@ -446,9 +428,6 @@ export default function ThemeSelection({
             className="rounded-game border border-text/10 bg-text/[0.04] p-4 text-left transition hover:border-success/40 hover:bg-text/[0.08]"
           >
             <h3 className="mb-2 font-semibold text-text">{theme.name}</h3>
-            <p className="mb-1 text-sm text-text/60">
-              Difficulty: {renderDifficultyStars(theme.difficulty)}
-            </p>
             <p className="text-sm text-text/60">
               Status: {renderVerificationStatus(theme.verified)}
             </p>
@@ -478,7 +457,6 @@ Example format:
 {
   "name": "Harry Potter",
   "language": "en",
-  "difficulty": 3,
   "description": {
     "teams": [
       "Gryffindor",
@@ -486,17 +464,29 @@ Example format:
       "Order of the Phoenix",
       ...
     ],
-    "words": [
-      "Tom Marvolo Riddle",
-      "Alohomora",
-      "Elder Wand",
-      "Deluminator",
+    "words": {
+      "Tom Marvolo Riddle": { "difficulty": 1 },
+      "Alohomora": { "difficulty": 1 },
+      "Elder Wand": { "difficulty": 1 },
+      "Deluminator": { "difficulty": 1 },
       ...
-    ]
+    }
   }
 }`}
               className="h-64 w-full rounded-game border border-text/15 bg-white p-4 font-mono text-sm text-text placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-success"
             />
+            <div className="mt-4 flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="import-public"
+                checked={importIsPublic}
+                onChange={(e) => setImportIsPublic(e.target.checked)}
+                className="h-4 w-4 accent-success"
+              />
+              <label htmlFor="import-public" className="text-text/80">
+                Public
+              </label>
+            </div>
             {importError && (
               <p className="mt-2 text-sm text-error">{importError}</p>
             )}
@@ -514,6 +504,7 @@ Example format:
                   setShowImportDialog(false);
                   setImportJson("");
                   setImportError("");
+                  setImportIsPublic(true);
                 }}
                 className="rounded-game border border-text/15 bg-text/[0.06] px-6 py-2 font-semibold text-text transition hover:bg-text/10"
               >

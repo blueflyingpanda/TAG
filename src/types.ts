@@ -1,26 +1,25 @@
 export const ThemeOrderBy = {
   ID: 'id',
   NAME: 'name',
-  PLAYED_COUNT: 'played_count',
-  LAST_PLAYED: 'last_played',
   LIKES: 'likes',
 } as const;
 
 export type ThemeOrderByType = typeof ThemeOrderBy[keyof typeof ThemeOrderBy];
 
+export interface ThemeWordMeta {
+  difficulty: number;
+}
+
 export interface Theme {
   id: number;
   name: string;
   language: string; // ISO 639 alpha-2
-  difficulty: number; // 1-5
   public: boolean;
   verified: boolean;
   description: {
-    words: string[];
+    words: Record<string, ThemeWordMeta>;
     teams: string[];
   };
-  played_count?: number;
-  last_played?: string | null;
   likes_count?: number;
   is_favorited?: boolean;
   creator?: {
@@ -34,7 +33,6 @@ export interface ThemeListItem {
   id: number;
   name: string;
   language: string;
-  difficulty: number;
   public: boolean;
   verified: boolean;
   likes_count?: number;
@@ -48,10 +46,9 @@ export interface ThemeListItem {
 export interface ThemePayload {
   name: string;
   language?: string;
-  difficulty?: number;
   public?: boolean;
   description: {
-    words: string[];
+    words: Record<string, ThemeWordMeta>;
     teams: string[];
   };
 }
@@ -67,6 +64,7 @@ export interface PaginatedThemes {
 export interface GameSettings {
   theme: Theme;
   selectedTeams: string[];
+  difficulty: number; // 1-5
   pointsRequired: number; // 10-100
   roundTimer: number; // 15-120, step 15
   skipPenalty: boolean;
@@ -122,6 +120,7 @@ export interface GameListItem {
 export interface GameDetailsResponse {
   id: number;
   theme_id: number;
+  difficulty?: number;
   started_at: string;
   ended_at: string | null;
   points: number;
@@ -142,6 +141,7 @@ export interface GameDetailsResponse {
 
 export interface GameCreatePayload {
   theme_id: number;
+  difficulty: number;
   started_at: string;
   ended_at: string | null;
   points: number;

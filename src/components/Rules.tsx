@@ -11,8 +11,8 @@ export default function Rules() {
             Basic Gameplay
           </h2>
           <p className="mb-3 text-text/80">
-            <strong>Alias</strong> is a fun word-guessing game where teams compete
-            to guess as many words as possible within a time limit.
+            <strong>Alias</strong> is a fun word-guessing game where teams
+            compete to guess as many words as possible within a time limit.
           </p>
           <ul className="list-inside list-disc space-y-2 text-text/80">
             <li>Players are divided into teams</li>
@@ -100,7 +100,7 @@ export default function Rules() {
               <strong>Search:</strong> Find themes by name or description
             </p>
             <p>
-              <strong>Minimum words:</strong> Each theme must have at least 100
+              <strong>Minimum words:</strong> Each theme must have at least 30
               words
             </p>
           </div>
@@ -151,8 +151,8 @@ export default function Rules() {
             <li>Configure game settings (points, timer, teams)</li>
             <li>Take turns describing words to your team</li>
             <li>
-              Click &quot;Guessed&quot; for correct answers, &quot;Skip&quot; for
-              difficult words
+              Click &quot;Guessed&quot; for correct answers, &quot;Skip&quot;
+              for difficult words
             </li>
             <li>Review and confirm results after each round</li>
             <li>Continue until a team reaches the target score</li>

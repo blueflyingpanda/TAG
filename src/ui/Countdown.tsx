@@ -21,7 +21,7 @@ export function Countdown({
   return (
     <div
       className={cn(
-        "relative flex h-[1.15em] min-w-[4ch] items-center justify-center overflow-hidden text-3xl font-bold tabular-nums md:text-4xl",
+        "relative flex h-[1.15em] min-w-[5.5ch] items-center justify-center overflow-hidden px-1 text-3xl font-bold tabular-nums md:text-4xl",
         isWarning ? "text-error" : "text-text",
         className,
       )}

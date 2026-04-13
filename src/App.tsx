@@ -46,7 +46,7 @@ function App() {
   const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
   const [selectedThemeId, setSelectedThemeId] = useState<number | null>(null);
   const [themeFilters, setThemeFilters] = useState<URLSearchParams | null>(
-    null
+    null,
   );
   const [gameState, setGameState] = useState<GameState | null>(() => {
     // Only restore game state if user is authenticated
@@ -214,6 +214,7 @@ function App() {
       // Create game via API with correct payload structure
       const gameData = {
         theme_id: settings.theme.id,
+        difficulty: settings.difficulty,
         started_at: new Date().toISOString(),
         ended_at: null,
         points: settings.pointsRequired,
@@ -236,10 +237,11 @@ function App() {
       setGameId(gameId);
       localStorage.setItem("tag_current_game_id", gameId);
 
-      // Ensure round timer respects minimum (15s) and coerce skipPenalty to boolean
+      // Ensure round timer respects minimum (15s), clamp difficulty, and coerce skipPenalty to boolean
       const safeSettings = {
         ...settings,
         roundTimer: Math.max(settings.roundTimer, 15),
+        difficulty: Math.max(1, Math.min(settings.difficulty, 5)),
         skipPenalty: !!settings.skipPenalty,
       };
       const newGameState = initializeGameState(safeSettings);
@@ -257,6 +259,7 @@ function App() {
       const safeSettings = {
         ...settings,
         roundTimer: Math.max(settings.roundTimer, 15),
+        difficulty: Math.max(1, Math.min(settings.difficulty, 5)),
         skipPenalty: !!settings.skipPenalty,
       };
       const newGameState = initializeGameState(safeSettings);
@@ -305,7 +308,7 @@ function App() {
   };
 
   const handleRoundResultsConfirm = (
-    finalResults: { word: string; guessed: boolean }[]
+    finalResults: { word: string; guessed: boolean }[],
   ) => {
     if (!gameState) return;
 
@@ -375,7 +378,7 @@ function App() {
             ([name, score]) => ({
               name,
               score,
-            })
+            }),
           );
 
           // Convert round results to words_guessed and words_skipped

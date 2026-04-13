@@ -78,6 +78,7 @@ export default function GameHistory({
         settings: {
           theme: fullTheme,
           selectedTeams: game.info.teams.map((team) => team.name),
+          difficulty: game.difficulty ?? 5,
           pointsRequired: game.points,
           roundTimer: game.round,
           skipPenalty: game.skip_penalty,

@@ -9,7 +9,6 @@ export async function getThemes(
   page = 1,
   size = 50,
   language?: string,
-  difficulty?: number,
   name?: string,
   mine?: boolean,
   verified?: boolean,
@@ -23,7 +22,6 @@ export async function getThemes(
   });
 
   if (language) params.append('language', language);
-  if (difficulty) params.append('difficulty', difficulty.toString());
   if (name) params.append('name', name);
   if (mine !== undefined) params.append('mine', mine.toString());
   if (verified !== undefined) params.append('verified', verified.toString());
@@ -140,7 +138,7 @@ export function apiThemeToLocal(theme: Theme): {
     lang: theme.language,
     name: theme.name,
     teams: theme.description.teams,
-    words: theme.description.words,
+    words: Object.keys(theme.description.words),
   };
 }
 
@@ -149,14 +147,14 @@ export function apiThemeToLocal(theme: Theme): {
  */
 export function localThemeToApi(
   theme: { lang: string; name: string; teams: string[]; words: string[] },
-  difficulty = 1
 ): ThemePayload {
   return {
     name: theme.name,
     language: theme.lang,
-    difficulty,
     description: {
-      words: theme.words,
+      words: Object.fromEntries(
+        theme.words.map((word) => [word, { difficulty: 1 }]),
+      ),
       teams: theme.teams,
     },
   };

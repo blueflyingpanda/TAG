@@ -14,12 +14,6 @@ interface ThemeDetailsProps {
   filters?: URLSearchParams;
 }
 
-function renderDifficultyStars(difficulty: number): string {
-  const stars = "⭐".repeat(difficulty);
-  const emptyStars = "☆".repeat(5 - difficulty);
-  return stars + emptyStars;
-}
-
 function renderVerificationStatus(verified: boolean): string {
   return verified ? "✅ Verified" : "❌ Unverified";
 }
@@ -35,6 +29,7 @@ export default function ThemeDetails({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  const wordList = theme ? Object.keys(theme.description.words) : [];
 
   useEffect(() => {
     const fetchThemeDetails = async () => {
@@ -151,7 +146,6 @@ export default function ThemeDetails({
           <h1 className="mb-2 text-3xl font-bold text-text">{theme.name}</h1>
           <div className="flex flex-wrap items-center gap-4 text-text/80">
             <span>Language: {theme.language.toUpperCase()}</span>
-            <span>Difficulty: {renderDifficultyStars(theme.difficulty)}</span>
             <span>Status: {renderVerificationStatus(theme.verified)}</span>
             <span>Visibility: {theme.public ? "Public" : "Private"}</span>
           </div>
@@ -183,11 +177,11 @@ export default function ThemeDetails({
 
           <div>
             <h2 className="mb-4 text-xl font-semibold text-text">
-              Words ({theme.description.words.length})
+              Words ({wordList.length})
             </h2>
             <div className="max-h-64 overflow-y-auto rounded-game border border-text/10 bg-text/[0.04] p-4">
               <div className="grid grid-cols-3 gap-2">
-                {theme.description.words.slice(0, 50).map((word, index) => (
+                {wordList.slice(0, 50).map((word, index) => (
                   <div
                     key={index}
                     className="rounded-game bg-card p-2 text-sm text-text/80"
@@ -195,25 +189,15 @@ export default function ThemeDetails({
                     {word}
                   </div>
                 ))}
-                {theme.description.words.length > 50 && (
+                {wordList.length > 50 && (
                   <div className="col-span-3 p-2 text-center text-sm text-text/60">
-                    ... and {theme.description.words.length - 50} more words
+                    ... and {wordList.length - 50} more words
                   </div>
                 )}
               </div>
             </div>
           </div>
         </div>
-
-        {theme.played_count !== undefined && (
-          <div className="text-text/60">
-            Played {theme.played_count} times
-            {theme.last_played &&
-              ` • Last played: ${new Date(
-                theme.last_played,
-              ).toLocaleDateString()}`}
-          </div>
-        )}
       </div>
     </div>
   );

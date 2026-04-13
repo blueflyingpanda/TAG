@@ -15,10 +15,14 @@ export default function CreateTheme({
 }: CreateThemeProps) {
   const [lang, setLang] = useState("en");
   const [name, setName] = useState("");
-  const [difficulty, setDifficulty] = useState(3);
   const [isPublic, setIsPublic] = useState(true);
   const [teams, setTeams] = useState<string[]>([""]);
-  const [words, setWords] = useState<string[]>([""]);
+  const [words, setWords] = useState<
+    {
+      text: string;
+      difficulty: number;
+    }[]
+  >([{ text: "", difficulty: 1 }]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -66,7 +70,7 @@ export default function CreateTheme({
       .map(([_lower, originals]) => `"${originals[0]}"`);
     if (duplicateTeams.length > 0) {
       return `Team names must be unique. Duplicates found: ${duplicateTeams.join(
-        ", "
+        ", ",
       )}`;
     }
     for (const team of validTeams) {
@@ -80,34 +84,38 @@ export default function CreateTheme({
     }
 
     // Words validation
-    const validWords = words.filter((w) => w.trim());
-    if (validWords.length < 100) {
-      return "Theme must have at least 100 words";
+    const validWords = words.filter((w) => w.text.trim());
+    const difficultyOneWords = validWords.filter((w) => w.difficulty === 1);
+    if (difficultyOneWords.length < 30) {
+      return "Theme must have at least 30 difficulty 1 words";
     }
     // Ensure words are unique (case-insensitive)
     const wordMap = new Map<string, string[]>();
     for (const word of validWords) {
-      const lower = word.trim().toLowerCase();
+      const lower = word.text.trim().toLowerCase();
       if (!wordMap.has(lower)) {
         wordMap.set(lower, []);
       }
-      wordMap.get(lower)!.push(word.trim());
+      wordMap.get(lower)!.push(word.text.trim());
     }
     const duplicateWords = Array.from(wordMap.entries())
       .filter(([, originals]) => originals.length > 1)
       .map(([_lower, originals]) => `"${originals[0]}"`);
     if (duplicateWords.length > 0) {
       return `Words must be unique within a theme. Duplicates found: ${duplicateWords.join(
-        ", "
+        ", ",
       )}`;
     }
     for (const word of validWords) {
-      if (word.length > 64) {
-        return `Word "${word}" must be 64 characters or less`;
+      if (word.text.length > 64) {
+        return `Word "${word.text}" must be 64 characters or less`;
       }
-      const wordWords = word.trim().split(/\s+/);
+      const wordWords = word.text.trim().split(/\s+/);
       if (wordWords.length > 10) {
-        return `Word "${word}" must be 10 words or less`;
+        return `Word "${word.text}" must be 10 words or less`;
+      }
+      if (word.difficulty < 1 || word.difficulty > 5) {
+        return `Word "${word.text}" must have a difficulty between 1 and 5`;
       }
     }
 
@@ -131,10 +139,13 @@ export default function CreateTheme({
     const themePayload = {
       name: name.trim(),
       language: lang,
-      difficulty,
       public: isPublic,
       description: {
-        words: words.filter((w) => w.trim()).map((w) => w.trim()),
+        words: Object.fromEntries(
+          words
+            .filter((w) => w.text.trim())
+            .map((w) => [w.text.trim(), { difficulty: w.difficulty }]),
+        ),
         teams: teams.filter((t) => t.trim()).map((t) => t.trim()),
       },
     };
@@ -160,7 +171,7 @@ export default function CreateTheme({
     // Focus the newly added input after DOM updates
     setTimeout(() => {
       const el = document.getElementById(
-        `team-input-${newIndex}`
+        `team-input-${newIndex}`,
       ) as HTMLInputElement | null;
       el?.focus();
     }, 0);
@@ -179,7 +190,7 @@ export default function CreateTheme({
   };
 
   const addWord = () => {
-    setWords([...words, ""]);
+    setWords([...words, { text: "", difficulty: 1 }]);
   };
 
   const removeWord = (index: number) => {
@@ -188,7 +199,13 @@ export default function CreateTheme({
 
   const updateWord = (index: number, value: string) => {
     const newWords = [...words];
-    newWords[index] = value;
+    newWords[index] = { ...newWords[index], text: value };
+    setWords(newWords);
+  };
+
+  const updateWordDifficulty = (index: number, difficulty: number) => {
+    const newWords = [...words];
+    newWords[index] = { ...newWords[index], difficulty };
     setWords(newWords);
   };
 
@@ -196,8 +213,9 @@ export default function CreateTheme({
     const imported = text
       .split("\n")
       .map((line) => line.trim())
-      .filter((line) => line.length > 0);
-    setWords([...words.filter((w) => w.trim()), ...imported]);
+      .filter((line) => line.length > 0)
+      .map((line) => ({ text: line, difficulty: 1 }));
+    setWords([...words.filter((w) => w.text.trim()), ...imported]);
   };
 
   const inputClass =
@@ -230,23 +248,6 @@ export default function CreateTheme({
           >
             <option value="en">English</option>
             <option value="ru">Russian</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-2 block font-semibold text-text">
-            Difficulty *
-          </label>
-          <select
-            value={difficulty}
-            onChange={(e) => setDifficulty(parseInt(e.target.value))}
-            className={inputClass}
-          >
-            <option value={1}>1 - Very Easy</option>
-            <option value={2}>2 - Easy</option>
-            <option value={3}>3 - Medium</option>
-            <option value={4}>4 - Hard</option>
-            <option value={5}>5 - Very Hard</option>
           </select>
         </div>
 
@@ -339,7 +340,8 @@ export default function CreateTheme({
 
         <div>
           <label className="mb-2 block font-semibold text-text">
-            Words * (min 100, each max 64 chars, max 10 words)
+            Words * (at least 30 difficulty 1 words, each max 64 chars, max 10
+            words)
           </label>
           <div className="mb-2">
             <button
@@ -355,15 +357,38 @@ export default function CreateTheme({
           </div>
           <div className="mb-2 max-h-64 space-y-2 overflow-y-auto">
             {words.map((word, index) => (
-              <div key={index} className="flex gap-2">
+              <div
+                key={index}
+                className="flex flex-col gap-2 sm:flex-row sm:items-center"
+              >
                 <input
                   type="text"
-                  value={word}
+                  value={word.text}
                   onChange={(e) => updateWord(index, e.target.value)}
                   placeholder={`Word ${index + 1}`}
                   className={`flex-1 text-sm ${inputClass}`}
                   maxLength={64}
                 />
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-text/80">Difficulty</span>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => updateWordDifficulty(index, level)}
+                        className={`rounded-full px-2 py-1 text-base transition ${
+                          level <= word.difficulty
+                            ? "text-success"
+                            : "text-text/40"
+                        }`}
+                        aria-label={`Set difficulty to ${level}`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => removeWord(index)}
@@ -383,7 +408,8 @@ export default function CreateTheme({
               + Add Word
             </button>
             <span className="text-sm text-text/60">
-              {words.filter((w) => w.trim()).length} / 100 words (minimum)
+              {words.filter((w) => w.text.trim() && w.difficulty === 1).length}{" "}
+              / 30 difficulty 1 words (minimum)
             </span>
           </div>
         </div>

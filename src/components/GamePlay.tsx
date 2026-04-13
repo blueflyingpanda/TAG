@@ -50,6 +50,7 @@ export default function GamePlay({
   const availableWords = getAvailableWords(
     gameState.settings.theme,
     gameState.wordsUsed,
+    gameState.settings.difficulty,
   );
   const currentTeam = getCurrentTeam(gameState);
 
@@ -305,6 +306,51 @@ export default function GamePlay({
     }, CARD_ADVANCE_MS);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        !gameState.isRoundActive ||
+        gameState.isPaused ||
+        cheatingDetected ||
+        isCardExiting
+      ) {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        handleWordAction(false);
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        handleWordAction(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    gameState.isRoundActive,
+    gameState.isPaused,
+    cheatingDetected,
+    isCardExiting,
+    currentWord,
+    roundResults,
+    roundWords,
+  ]);
+
   // Check for winners: either reached target score or no words left
   let winners: string[] = [];
 
@@ -488,7 +534,7 @@ export default function GamePlay({
         )}
       </AnimatePresence>
 
-      <div className="relative mt-20 flex w-full flex-col items-center gap-4 md:mt-0 md:gap-6">
+      <div className="relative mt-32 flex w-full flex-col items-center gap-4 md:mt-36 md:gap-6">
         <GamePlayCardStack
           currentIndex={gameState.currentWordIndex}
           currentWord={currentWord}
@@ -535,6 +581,9 @@ export default function GamePlay({
                 ⏸️ {roundPausedOnce ? "Paused" : "Pause"}
               </Button>
             </div>
+            <p className="mt-2 text-center text-xs text-text/50 hidden md:block">
+              Desktop shortcut: ← Skip, → Guessed
+            </p>
           </div>
         ) : (
           <div className="flex w-full justify-center pb-[max(0.5rem,env(safe-area-inset-bottom))] md:pb-0">
