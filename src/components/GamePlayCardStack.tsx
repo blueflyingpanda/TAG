@@ -146,7 +146,7 @@ export function GamePlayCardStack({
   return (
     <div className="flex w-full flex-col items-center">
       <div className="relative h-[340px] w-full overflow-hidden">
-        <div className="absolute left-1/2 top-0 h-[min(300px,calc(100vw-2rem))] w-[min(300px,calc(100vw-2rem))] -translate-x-1/2">
+        <div className="absolute left-1/2 top-4 h-[min(300px,calc(100vw-2rem))] w-[min(300px,calc(100vw-2rem))] -translate-x-1/2 md:top-6">
           <AnimatePresence initial={false}>
             {showStack && backWord && (
               <StackCard
