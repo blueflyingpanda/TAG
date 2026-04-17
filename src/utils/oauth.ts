@@ -17,7 +17,8 @@ const TOKEN_STORAGE_KEY = 'auth_token';
  */
 interface JWTPayload {
   user_id: number;
-  email: string;
+  email?: string | null;
+  username?: string;
   picture?: string;
   admin: boolean;
   exp: number;
@@ -62,6 +63,27 @@ export async function exchangeOAuthCode(code: string): Promise<string> {
   return token;
 }
 
+export async function exchangeTelegramInitData(initData: string): Promise<string> {
+  const response = await fetch(AUTH_ENDPOINTS.telegram, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ init_data: initData }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Telegram auth failed: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const token = data.token;
+
+  localStorage.setItem(TOKEN_STORAGE_KEY, token);
+
+  return token;
+}
+
 /**
  * Get stored JWT token
  */
@@ -100,10 +122,17 @@ export function getCurrentUser(): User | null {
     return null;
   }
 
+  const email = payload.email ?? null;
+  const username =
+    payload.username ||
+    (typeof email === "string" && email.includes("@")
+      ? email.split("@")[0]
+      : "Player");
+
   return {
     id: payload.user_id.toString(),
-    email: payload.email,
-    username: payload.email.split('@')[0], // Use email prefix as username
+    email,
+    username,
     picture: payload.picture,
     admin: payload.admin,
   };

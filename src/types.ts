@@ -89,7 +89,7 @@ export interface GameState {
 
 export interface User {
   id: string;
-  email: string;
+  email: string | null;
   username: string;
   picture?: string;
   admin: boolean;

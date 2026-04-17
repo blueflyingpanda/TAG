@@ -12,4 +12,5 @@ export const API_BASE = isDevelopment
 export const AUTH_ENDPOINTS = {
   login: `${API_BASE}/auth/login`,
   exchange: `${API_BASE}/auth/exchange`,
+  telegram: `${API_BASE}/auth/telegram`,
 };

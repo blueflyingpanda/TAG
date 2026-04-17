@@ -16,6 +16,7 @@ import {
   clearOAuthCallback,
   clearStoredToken,
   exchangeOAuthCode,
+  exchangeTelegramInitData,
   getCurrentUser,
 } from "./utils/oauth";
 import { storage } from "./utils/storage";
@@ -105,8 +106,31 @@ function App() {
   };
 
   useEffect(() => {
-    // Handle OAuth callback from backend redirect
-    const handleOAuthCallback = async () => {
+    const handleAuthStartup = async () => {
+      const telegram = (window as any).Telegram?.WebApp;
+      const initData = telegram?.initData;
+
+      if (initData) {
+        try {
+          telegram.ready();
+          telegram.expand();
+
+          await exchangeTelegramInitData(initData);
+          const userData = getCurrentUser();
+          if (userData) {
+            storage.saveUser(userData);
+            setUser(userData);
+            setScreen("theme-selection");
+          }
+          return;
+        } catch (err) {
+          console.error("Telegram auth failed:", err);
+          setScreen("login");
+          return;
+        }
+      }
+
+      // Handle OAuth callback from backend redirect
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get("code");
 
@@ -137,7 +161,7 @@ function App() {
       }
     };
 
-    handleOAuthCallback();
+    handleAuthStartup();
   }, []);
 
   useEffect(() => {
@@ -438,7 +462,14 @@ function App() {
                   className="h-8 w-8 rounded-full border-2 border-text/15"
                 />
               )}
-              <div className="text-sm text-text/80">{user.email}</div>
+              <div className="text-left">
+                <div className="text-sm font-semibold text-text">
+                  {user.username}
+                </div>
+                {user.email ? (
+                  <div className="text-sm text-text/80">{user.email}</div>
+                ) : null}
+              </div>
             </div>
 
             {!hideHeaderButtons && (
