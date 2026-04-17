@@ -62,7 +62,7 @@ function StackCard({
       initial={!isFront ? { scale: 0, y: 105, opacity: 0 } : false}
       animate={{
         scale: isFront ? 1 : 0.75,
-        y: isFront ? 0 : 60,
+        y: isFront ? 0 : 40,
         opacity: isFront ? 1 : 0.5,
         x: 0,
       }}
@@ -145,8 +145,8 @@ export function GamePlayCardStack({
 
   return (
     <div className="flex w-full flex-col items-center">
-      <div className="relative h-[320px] w-full overflow-hidden">
-        <div className="absolute left-1/2 top-0 h-[min(290px,calc(100vw-2rem))] w-[min(290px,calc(100vw-2rem))] -translate-x-1/2">
+      <div className="relative h-[360px] w-full overflow-hidden">
+        <div className="absolute left-1/2 top-0 h-[min(320px,calc(100vw-2rem))] w-[min(320px,calc(100vw-2rem))] -translate-x-1/2">
           <AnimatePresence initial={false}>
             {showStack && backWord && (
               <StackCard
