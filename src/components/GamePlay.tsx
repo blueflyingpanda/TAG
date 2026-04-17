@@ -534,7 +534,7 @@ export default function GamePlay({
         )}
       </AnimatePresence>
 
-      <div className="relative mt-32 flex w-full flex-col items-center gap-4 md:mt-36 md:gap-6">
+      <div className="relative mt-20 flex w-full flex-col items-center gap-4 md:mt-36 md:gap-6">
         <GamePlayCardStack
           currentIndex={gameState.currentWordIndex}
           currentWord={currentWord}

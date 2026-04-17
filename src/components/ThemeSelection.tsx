@@ -284,20 +284,20 @@ export default function ThemeSelection({
             </select>
           </div>
 
-          <div>
+          <div className="w-full">
             <label className="mb-2 block text-text/80">Search</label>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search themes..."
-                className="rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-success"
+                className="w-full rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-success"
               />
               <button
                 type="button"
                 onClick={fetchThemes}
-                className="rounded-game bg-success px-4 py-2 font-semibold text-white transition hover:opacity-90"
+                className="w-full rounded-game bg-success px-4 py-2 font-semibold text-white transition hover:opacity-90 sm:w-auto"
               >
                 Search
               </button>
