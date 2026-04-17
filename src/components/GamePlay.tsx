@@ -534,7 +534,7 @@ export default function GamePlay({
         )}
       </AnimatePresence>
 
-      <div className="relative mt-24 flex w-full flex-col items-center gap-4 md:mt-36 md:gap-6">
+      <div className="relative mt-20 flex w-full flex-col items-center gap-4 md:mt-36 md:gap-6">
         <GamePlayCardStack
           currentIndex={gameState.currentWordIndex}
           currentWord={currentWord}
@@ -548,7 +548,7 @@ export default function GamePlay({
 
         {/* Action Buttons */}
         {!gameState.isPaused ? (
-          <div className="mt-12 flex w-full max-w-[min(290px,calc(100vw-2rem))] flex-col gap-2 px-0 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:gap-3 md:pb-0">
+          <div className="mt-8 z-10 flex w-full max-w-[min(290px,calc(100vw-2rem))] flex-col gap-2 px-0 pb-[max(0.5rem,env(safe-area-inset-bottom))] md:gap-3 md:pb-0">
             <div className="flex w-full gap-3">
               <Button
                 type="button"
@@ -586,7 +586,7 @@ export default function GamePlay({
             </p>
           </div>
         ) : (
-          <div className="flex w-full justify-center pb-[max(0.5rem,env(safe-area-inset-bottom))] md:pb-0">
+          <div className="mt-6 z-10 flex w-full justify-center pb-[max(0.5rem,env(safe-area-inset-bottom))] md:pb-0">
             <Button
               type="button"
               variant="success"
