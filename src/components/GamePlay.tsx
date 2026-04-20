@@ -38,6 +38,7 @@ export default function GamePlay({
   const [roundPausedOnce, setRoundPausedOnce] = useState(false);
   const timerIntervalRef = useRef<number | null>(null);
   const roundResultsRef = useRef<{ word: string; guessed: boolean }[]>([]);
+  const roundEndingRef = useRef(false);
   const [roundEndedByTimeout, setRoundEndedByTimeout] = useState(false);
 
   const [cardExitX, setCardExitX] = useState(0);
@@ -98,6 +99,7 @@ export default function GamePlay({
       return;
     }
 
+    roundEndingRef.current = false;
     const shuffled = shuffleArray([...availableWords]);
     setRoundWords(shuffled);
     const firstWord = shuffled[0] || "";
@@ -118,6 +120,7 @@ export default function GamePlay({
   };
 
   const endRound = (timedOut = false) => {
+    roundEndingRef.current = true;
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
     }
@@ -278,6 +281,7 @@ export default function GamePlay({
     setCardExitX(guessed ? 250 : -250);
 
     window.setTimeout(() => {
+      if (roundEndingRef.current) return;
       const newResults = [...roundResults, { word: currentWord, guessed }];
       setRoundResults(newResults);
       roundResultsRef.current = newResults;
@@ -380,6 +384,7 @@ export default function GamePlay({
   const skippedThisRound = roundResults.filter((r) => !r.guessed).length;
 
   const backWord =
+    !roundEndingRef.current &&
     gameState.isRoundActive &&
     !gameState.isPaused &&
     gameState.currentWordIndex + 1 < roundWords.length
