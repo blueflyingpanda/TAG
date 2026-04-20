@@ -125,6 +125,12 @@ export default function GamePlay({
     // Capture results IMMEDIATELY before any async operations
     const roundEndResults = [...roundResultsRef.current];
 
+    // If timed out and the current word was never actioned, add it as skipped
+    // so the user can toggle it to guessed in the results screen
+    if (timedOut && currentWord && !roundEndResults.some((r) => r.word === currentWord)) {
+      roundEndResults.push({ word: currentWord, guessed: false });
+    }
+
     setRoundEndedByTimeout(timedOut);
     setGameState({
       ...gameState,
