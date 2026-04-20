@@ -303,9 +303,9 @@ function App() {
 
     // (previous duplicate-guard removed) process incoming results
 
-    // If no words were processed this round, advance to the next team
-    // immediately so the same team does not keep playing.
-    if (results.length === 0) {
+    // If no words were processed and there's no last word to credit,
+    // advance to the next team immediately so the same team does not keep playing.
+    if (results.length === 0 && !lastWord) {
       const updatedState = { ...gameState };
       // advance team
       updatedState.currentTeamIndex =
