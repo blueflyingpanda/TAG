@@ -426,7 +426,7 @@ export default function GamePlay({
     );
   }
 
-  if (!gameState.isRoundActive) {
+  if (!gameState.isRoundActive && !roundEndingRef.current) {
     return (
       <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-transparent p-4">
         <motion.div
