@@ -53,6 +53,7 @@ function App() {
     // Only restore game state if user is authenticated
     return initialUser ? storage.getGameState() : null;
   });
+  const [roundLastWord, setRoundLastWord] = useState<string | null>(null);
   const [, setGameId] = useState<string | null>(() => {
     // Generate or restore game ID
     const saved = localStorage.getItem("tag_current_game_id");
@@ -292,7 +293,7 @@ function App() {
     }
   };
 
-  const handleRoundEnd = (results: { word: string; guessed: boolean }[]) => {
+  const handleRoundEnd = (results: { word: string; guessed: boolean }[], lastWord?: string) => {
     if (!gameState) return;
     // Ignore late or duplicate end signals if the game already has a winner
     // (for example a pending timeout firing after the round was already
@@ -327,12 +328,14 @@ function App() {
     // Otherwise, show round results for the team to confirm their answers.
     // The winner check must run only after the team confirms in
     // `handleRoundResultsConfirm`.
+    setRoundLastWord(lastWord ?? null);
     setGameState({ ...gameState, roundResults: results });
     setScreen("round-results");
   };
 
   const handleRoundResultsConfirm = (
     finalResults: { word: string; guessed: boolean }[],
+    lastWordGuessed: boolean | null,
   ) => {
     if (!gameState) return;
 
@@ -350,6 +353,15 @@ function App() {
       }
     });
 
+    // Last word: +1 if guessed, no penalty and not tracked if not guessed
+    const resultsForAPI = [...finalResults];
+    if (lastWordGuessed && roundLastWord) {
+      scoreChange += 1;
+      updatedState.wordsUsed.push(roundLastWord);
+      resultsForAPI.push({ word: roundLastWord, guessed: true });
+    }
+    setRoundLastWord(null);
+
     updatedState.teamScores[currentTeam] += scoreChange;
     updatedState.wordsUsed.push(...finalResults.map((r) => r.word));
 
@@ -359,7 +371,7 @@ function App() {
     if (winners.length > 0) {
       // Game ends - show winner screen immediately
       // Update API with final state before clearing
-      const tempStateForAPI = { ...updatedState, roundResults: finalResults };
+      const tempStateForAPI = { ...updatedState, roundResults: resultsForAPI };
       updateGameViaAPI(tempStateForAPI);
 
       storage.clearGameState();
@@ -384,7 +396,7 @@ function App() {
     updatedState.currentWordIndex = 0;
 
     // Update game via API with the round results AFTER moving to next team
-    const tempStateForAPI = { ...updatedState, roundResults: finalResults };
+    const tempStateForAPI = { ...updatedState, roundResults: resultsForAPI };
     updateGameViaAPI(tempStateForAPI);
 
     setGameState(updatedState);
@@ -595,6 +607,7 @@ function App() {
               <RoundResults
                 results={gameState.roundResults}
                 skipPenalty={Boolean(gameState.settings.skipPenalty)}
+                lastWord={roundLastWord ?? undefined}
                 onConfirm={handleRoundResultsConfirm}
               />
             )}

@@ -16,7 +16,7 @@ import { GamePlayCardStack } from "./GamePlayCardStack";
 interface GamePlayProps {
   gameState: GameState;
   setGameState: (state: GameState) => void;
-  onRoundEnd: (results: { word: string; guessed: boolean }[]) => void;
+  onRoundEnd: (results: { word: string; guessed: boolean }[], lastWord?: string) => void;
   onGameEnd: () => void;
 }
 
@@ -125,11 +125,12 @@ export default function GamePlay({
     // Capture results IMMEDIATELY before any async operations
     const roundEndResults = [...roundResultsRef.current];
 
-    // If timed out and the current word was never actioned, add it as skipped
-    // so the user can toggle it to guessed in the results screen
-    if (timedOut && currentWord && !roundEndResults.some((r) => r.word === currentWord)) {
-      roundEndResults.push({ word: currentWord, guessed: false });
-    }
+    // If timed out and current word was never actioned, surface it separately
+    // so the user can optionally credit it without any skip penalty
+    const timedOutLastWord =
+      timedOut && currentWord && !roundEndResults.some((r) => r.word === currentWord)
+        ? currentWord
+        : undefined;
 
     setRoundEndedByTimeout(timedOut);
     setGameState({
@@ -145,7 +146,7 @@ export default function GamePlay({
     // Get the latest results - don't count the last word if timer ended
     setTimeout(() => {
       setRoundResults(roundEndResults);
-      onRoundEnd(roundEndResults);
+      onRoundEnd(roundEndResults, timedOutLastWord);
     }, 100);
   };
 

@@ -3,16 +3,22 @@ import { useEffect, useState } from "react";
 
 interface RoundResultsProps {
   results: { word: string; guessed: boolean }[];
-  onConfirm: (results: { word: string; guessed: boolean }[]) => void;
+  onConfirm: (
+    results: { word: string; guessed: boolean }[],
+    lastWordGuessed: boolean | null,
+  ) => void;
   skipPenalty?: boolean;
+  lastWord?: string;
 }
 
 export default function RoundResults({
   results,
   onConfirm,
   skipPenalty = true,
+  lastWord,
 }: RoundResultsProps) {
   const [finalResults, setFinalResults] = useState(results);
+  const [lastWordGuessed, setLastWordGuessed] = useState<boolean | null>(null);
 
   useEffect(() => {
     setFinalResults(results);
@@ -29,7 +35,9 @@ export default function RoundResults({
 
   const guessedCount = finalResults.filter((r) => r.guessed).length;
   const skippedCount = finalResults.length - guessedCount;
-  const earned = skipPenalty ? guessedCount - skippedCount : guessedCount;
+  const earned =
+    (skipPenalty ? guessedCount - skippedCount : guessedCount) +
+    (lastWordGuessed ? 1 : 0);
   const [pulse, setPulse] = useState(false);
 
   useEffect(() => {
@@ -139,13 +147,37 @@ export default function RoundResults({
               </button>
             ))}
           </div>
+
+          {lastWord && (
+            <div className="mt-6">
+              <p className="mb-2 text-sm text-text/50">Last word</p>
+              <button
+                type="button"
+                onClick={() =>
+                  setLastWordGuessed((prev) => (prev ? null : true))
+                }
+                className={`w-full rounded-game p-4 text-left transition hover:opacity-90 ${
+                  lastWordGuessed
+                    ? "border border-success/30 bg-success/15 text-text"
+                    : "border border-text/10 bg-text/5 text-text/60"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold">{lastWord}</span>
+                  <span className="text-2xl">
+                    {lastWordGuessed ? "✅" : "❓"}
+                  </span>
+                </div>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="pointer-events-none fixed bottom-4 left-0 right-0 flex justify-center">
         <button
           type="button"
-          onClick={() => onConfirm(finalResults)}
+          onClick={() => onConfirm(finalResults, lastWordGuessed)}
           className="pointer-events-auto rounded-game bg-success px-6 py-3 font-semibold text-white shadow-sm transition hover:opacity-90"
         >
           Confirm
