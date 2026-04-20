@@ -33,11 +33,10 @@ export default function RoundResults({
     setFinalResults(updated);
   };
 
-  const guessedCount = finalResults.filter((r) => r.guessed).length;
-  const skippedCount = finalResults.length - guessedCount;
-  const earned =
-    (skipPenalty ? guessedCount - skippedCount : guessedCount) +
-    (lastWordGuessed ? 1 : 0);
+  const baseGuessed = finalResults.filter((r) => r.guessed).length;
+  const skippedCount = finalResults.length - baseGuessed;
+  const guessedCount = baseGuessed + (lastWordGuessed ? 1 : 0);
+  const earned = (skipPenalty ? baseGuessed - skippedCount : baseGuessed) + (lastWordGuessed ? 1 : 0);
   const [pulse, setPulse] = useState(false);
 
   useEffect(() => {
