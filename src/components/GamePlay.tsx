@@ -39,7 +39,6 @@ export default function GamePlay({
   const timerIntervalRef = useRef<number | null>(null);
   const roundResultsRef = useRef<{ word: string; guessed: boolean }[]>([]);
   const roundEndingRef = useRef(false);
-  const [roundEndedByTimeout, setRoundEndedByTimeout] = useState(false);
 
   const [cardExitX, setCardExitX] = useState(0);
   const [isCardExiting, setIsCardExiting] = useState(false);
@@ -68,18 +67,6 @@ export default function GamePlay({
       : gameState.isPaused
         ? pausedRemainingTime || 0
         : 0;
-
-  // Auto-start next round if previous round ended by timeout
-  useEffect(() => {
-    if (
-      roundEndedByTimeout &&
-      !gameState.isRoundActive &&
-      availableWords.length > 0
-    ) {
-      setRoundEndedByTimeout(false);
-      startRound();
-    }
-  }, [roundEndedByTimeout, gameState.isRoundActive, availableWords.length]);
 
   const startRound = () => {
     if (availableWords.length === 0) {
@@ -135,7 +122,6 @@ export default function GamePlay({
         ? currentWord
         : undefined;
 
-    setRoundEndedByTimeout(timedOut);
     setGameState({
       ...gameState,
       isRoundActive: false,
