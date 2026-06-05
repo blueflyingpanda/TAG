@@ -18,6 +18,7 @@ import {
   exchangeOAuthCode,
   exchangeTelegramInitData,
   getCurrentUser,
+  setUnauthorizedHandler,
 } from "./utils/oauth";
 import { storage } from "./utils/storage";
 
@@ -228,6 +229,11 @@ function App() {
     setGameState(null);
     setScreen("login");
   };
+
+  useEffect(() => {
+    setUnauthorizedHandler(handleLogout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleThemeSelect = (theme: Theme) => {
     setSelectedTheme(theme);

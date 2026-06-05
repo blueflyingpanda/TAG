@@ -153,6 +153,12 @@ export function getAuthHeader(): { Authorization: string } | Record<string, neve
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+let unauthorizedHandler: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: () => void): void {
+  unauthorizedHandler = handler;
+}
+
 /**
  * Make authenticated API request with Bearer token
  */
@@ -163,10 +169,16 @@ export async function authenticatedFetch(url: string, options: RequestInit = {})
     ...authHeader,
   };
 
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
     headers,
   });
+
+  if (response.status === 401) {
+    unauthorizedHandler?.();
+  }
+
+  return response;
 }
 
 /**
