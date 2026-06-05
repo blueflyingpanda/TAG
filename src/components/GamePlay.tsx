@@ -437,7 +437,7 @@ export default function GamePlay({
           <h2 className="text-3xl font-bold text-text">
             Round {gameState.currentRound}
           </h2>
-          <div className="mx-auto max-w-[200px] truncate text-2xl font-bold text-success">
+          <div className="mx-auto w-full truncate text-lg font-bold text-success">
             {currentTeam}
           </div>
 
