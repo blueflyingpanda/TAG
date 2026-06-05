@@ -427,10 +427,9 @@ export default function ThemeSelection({
             type="button"
             className="rounded-game border border-text/10 bg-text/[0.04] p-4 text-left transition hover:border-success/40 hover:bg-text/[0.08]"
           >
-            <h3 className="mb-2 font-semibold text-text">{theme.name}</h3>
-            <p className="text-sm text-text/60">
-              Status: {renderVerificationStatus(theme.verified)}
-            </p>
+            <h3 className="font-semibold text-text">
+              {renderVerificationStatus(theme.verified)} {theme.name}
+            </h3>
           </button>
         ))}
       </div>
