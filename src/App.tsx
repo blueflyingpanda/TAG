@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useTheme } from "./hooks/useTheme";
 import CreateTheme from "./components/CreateTheme";
 import GameHistory from "./components/GameHistory";
 import GamePlay from "./components/GamePlay";
@@ -36,6 +37,7 @@ type AppScreen =
   | "rules";
 
 function App() {
+  const { theme, toggle: toggleTheme } = useTheme();
   const initialUser = storage.getUser();
   const [screen, setScreen] = useState<AppScreen>(() => {
     // Require authentication - if no user, always show login
@@ -488,6 +490,20 @@ function App() {
                   <div className="text-sm text-text/80">{user.email}</div>
                 ) : null}
               </div>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label="Toggle dark mode"
+                className="relative ml-2 flex h-7 w-14 items-center rounded-full border border-text/15 bg-text/[0.07] px-1 transition-colors hover:bg-text/[0.12]"
+              >
+                <span className="absolute left-1.5 text-xs">☀️</span>
+                <span className="absolute right-1.5 text-xs">🌙</span>
+                <span
+                  className={`relative z-10 h-5 w-5 rounded-full bg-card shadow transition-transform duration-300 ${
+                    theme === "dark" ? "translate-x-7" : "translate-x-0"
+                  }`}
+                />
+              </button>
             </div>
 
             {!hideHeaderButtons && (

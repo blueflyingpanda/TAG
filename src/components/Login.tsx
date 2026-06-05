@@ -23,7 +23,7 @@ export default function Login() {
           disabled={isLoading}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex w-full items-center justify-center gap-3 rounded-game border border-text/10 bg-white px-6 py-4 font-semibold text-text shadow-sm transition hover:bg-text/5 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-3 rounded-game border border-text/10 bg-white px-6 py-4 font-semibold text-[#222] shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? (
             "Loading..."

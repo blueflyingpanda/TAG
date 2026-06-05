@@ -219,7 +219,7 @@ export default function CreateTheme({
   };
 
   const inputClass =
-    "w-full rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success";
+    "w-full rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success";
 
   return (
     <div className="mx-auto max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-game bg-card p-6 shadow-sm md:p-8">

@@ -277,7 +277,7 @@ export default function ThemeSelection({
             <select
               value={selectedLang}
               onChange={(e) => setSelectedLang(e.target.value)}
-              className="rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
+              className="rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
             >
               <option value="en">English</option>
               <option value="ru">Russian</option>
@@ -292,7 +292,7 @@ export default function ThemeSelection({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search themes..."
-                className="w-full rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-success"
+                className="w-full rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-success"
               />
               <button
                 type="button"
@@ -312,7 +312,7 @@ export default function ThemeSelection({
             <select
               value={orderBy}
               onChange={(e) => setOrderBy(e.target.value as ThemeOrderByType)}
-              className="rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
+              className="rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
             >
               <option value={ThemeOrderBy.ID}>Creation Date</option>
               <option value={ThemeOrderBy.NAME}>Name</option>
@@ -325,7 +325,7 @@ export default function ThemeSelection({
             <select
               value={orderDescending ? "desc" : "asc"}
               onChange={(e) => setOrderDescending(e.target.value === "desc")}
-              className="rounded-game border border-text/15 bg-white px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
+              className="rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
             >
               <option value="asc">Ascending</option>
               <option value="desc">Descending</option>
@@ -473,7 +473,7 @@ Example format:
     }
   }
 }`}
-              className="h-64 w-full rounded-game border border-text/15 bg-white p-4 font-mono text-sm text-text placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-success"
+              className="h-64 w-full rounded-game border border-text/15 bg-card p-4 font-mono text-sm text-text placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-success"
             />
             <div className="mt-4 flex items-center gap-2">
               <input

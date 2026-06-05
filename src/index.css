@@ -16,6 +16,7 @@ body {
   padding: 0;
 }
 
+/* ── Light mode tokens (RGB channels for Tailwind opacity modifiers) ── */
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
@@ -24,15 +25,40 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  --color-primary:   34  49 100;   /* #223164 */
+  --color-secondary: 236 172 174;  /* #ECACAE */
+  --color-error:     229  61   0;  /* #e53d00 */
+  --color-success:    33 160 160;  /* #21a0a0 */
+  --color-card:      252 255 247;  /* #fcfff7 */
+  --color-text:       34  34  34;  /* #222222 */
+
+  --bg-start: #fdecc7;
+  --bg-mid:   #f2deb5;
+  --bg-end:   #e7d0a4;
+}
+
+/* ── Dark mode tokens ── */
+.dark {
+  --color-primary:    74 111 212;  /* #4a6fd4 — lighter navy for dark bg */
+  --color-secondary: 210 140 143;  /* #d28c8f — deeper blush */
+  --color-error:     255  82  56;  /* #ff5238 — brighter for visibility */
+  --color-success:    38 181 181;  /* #26b5b5 — slightly brighter teal */
+  --color-card:       33  37  64;  /* #212540 — dark navy card */
+  --color-text:      232 232 244;  /* #e8e8f4 — off-white with blue tint */
+
+  --bg-start: #1d2035;
+  --bg-mid:   #181b2d;
+  --bg-end:   #141626;
 }
 
 html {
-  background-color: #e7d0a4;
+  background-color: var(--bg-end);
   background-image: radial-gradient(
     circle at 85.54% 7.65%,
-    #fdecc7 0,
-    #f2deb5 50%,
-    #e7d0a4 100%
+    var(--bg-start) 0,
+    var(--bg-mid)   50%,
+    var(--bg-end)   100%
   );
 }
 
@@ -45,9 +71,9 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   background-image: radial-gradient(
     circle at 85.54% 7.65%,
-    #fdecc7 0,
-    #f2deb5 50%,
-    #e7d0a4 100%
+    var(--bg-start) 0,
+    var(--bg-mid)   50%,
+    var(--bg-end)   100%
   );
 }
 
@@ -61,12 +87,20 @@ button {
   cursor: pointer;
 }
 
-/* Light-theme selects */
 select {
   color-scheme: light;
+}
+
+.dark select {
+  color-scheme: dark;
 }
 
 select option {
   background-color: #fcfff7 !important;
   color: #222 !important;
+}
+
+.dark select option {
+  background-color: #212540 !important;
+  color: #e8e8f4 !important;
 }
