@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useLocale } from "../contexts/LocaleContext";
 
 interface RoundResultsProps {
   results: { word: string; guessed: boolean }[];
@@ -17,6 +18,7 @@ export default function RoundResults({
   skipPenalty = true,
   lastWord,
 }: RoundResultsProps) {
+  const { t } = useLocale();
   const [finalResults, setFinalResults] = useState(results);
   const [lastWordGuessed, setLastWordGuessed] = useState<boolean | null>(null);
 
@@ -26,10 +28,7 @@ export default function RoundResults({
 
   const toggleWord = (index: number) => {
     const updated = [...finalResults];
-    updated[index] = {
-      ...updated[index],
-      guessed: !updated[index].guessed,
-    };
+    updated[index] = { ...updated[index], guessed: !updated[index].guessed };
     setFinalResults(updated);
   };
 
@@ -42,10 +41,7 @@ export default function RoundResults({
   useEffect(() => {
     const start = setTimeout(() => setPulse(true), 0);
     const end = setTimeout(() => setPulse(false), 300);
-    return () => {
-      clearTimeout(start);
-      clearTimeout(end);
-    };
+    return () => { clearTimeout(start); clearTimeout(end); };
   }, [earned]);
 
   return (
@@ -54,25 +50,14 @@ export default function RoundResults({
       initial={{ y: "100vh", opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: "100vh", opacity: 0 }}
-      transition={{
-        type: "spring",
-        stiffness: 300,
-        damping: 30,
-        duration: 0.6,
-      }}
+      transition={{ type: "spring", stiffness: 300, damping: 30, duration: 0.6 }}
     >
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="mx-auto w-full max-w-2xl rounded-game bg-card p-6 shadow-sm md:p-8">
-          <h1 className="mb-2 text-center text-3xl font-bold text-text">
-            Round Results
-          </h1>
-          <p className="mb-6 text-center text-text/60">
-            Tap words to toggle between ✅ and ❌
-          </p>
+          <h1 className="mb-2 text-center text-3xl font-bold text-text">{t.rr_title}</h1>
+          <p className="mb-6 text-center text-text/60">{t.rr_hint}</p>
           {results.length === 0 && (
-            <p className="mb-6 text-center text-text/60">
-              No words were processed in this round.
-            </p>
+            <p className="mb-6 text-center text-text/60">{t.rr_noWords}</p>
           )}
 
           <div className="mb-6 flex justify-center gap-6">
@@ -86,30 +71,19 @@ export default function RoundResults({
               >
                 {guessedCount}
               </motion.div>
-              <div className="text-sm text-text/60">Guessed</div>
+              <div className="text-sm text-text/60">{t.rr_guessed}</div>
             </div>
             <div className="text-center">
               <motion.div
-                className={`text-2xl font-bold ${
-                  earned > 0
-                    ? "text-success"
-                    : earned < 0
-                      ? "text-error"
-                      : "text-text/80"
-                }`}
+                className={`text-2xl font-bold ${earned > 0 ? "text-success" : earned < 0 ? "text-error" : "text-text/80"}`}
                 key={earned}
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: pulse ? 1.2 : 1, opacity: 1 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 400,
-                  damping: 15,
-                  duration: 0.3,
-                }}
+                transition={{ type: "spring", stiffness: 400, damping: 15, duration: 0.3 }}
               >
                 ⭐ {earned}
               </motion.div>
-              <div className="text-sm text-text/60">Earned</div>
+              <div className="text-sm text-text/60">{t.rr_earned}</div>
             </div>
             <div className="text-center">
               <motion.div
@@ -121,7 +95,7 @@ export default function RoundResults({
               >
                 {skippedCount}
               </motion.div>
-              <div className="text-sm text-text/60">Skipped</div>
+              <div className="text-sm text-text/60">{t.rr_skipped}</div>
             </div>
           </div>
 
@@ -139,9 +113,7 @@ export default function RoundResults({
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">{result.word}</span>
-                  <span className="text-2xl">
-                    {result.guessed ? "✅" : "❌"}
-                  </span>
+                  <span className="text-2xl">{result.guessed ? "✅" : "❌"}</span>
                 </div>
               </button>
             ))}
@@ -149,12 +121,10 @@ export default function RoundResults({
 
           {lastWord && (
             <div className="mt-6">
-              <p className="mb-2 text-sm text-text/50">Last word</p>
+              <p className="mb-2 text-sm text-text/50">{t.rr_lastWord}</p>
               <button
                 type="button"
-                onClick={() =>
-                  setLastWordGuessed((prev) => (prev ? null : true))
-                }
+                onClick={() => setLastWordGuessed((prev) => (prev ? null : true))}
                 className={`w-full rounded-game p-4 text-left transition hover:opacity-90 ${
                   lastWordGuessed
                     ? "border border-success/30 bg-success/15 text-text"
@@ -163,9 +133,7 @@ export default function RoundResults({
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">{lastWord}</span>
-                  <span className="text-2xl">
-                    {lastWordGuessed ? "✅" : "❓"}
-                  </span>
+                  <span className="text-2xl">{lastWordGuessed ? "✅" : "❓"}</span>
                 </div>
               </button>
             </div>
@@ -179,7 +147,7 @@ export default function RoundResults({
           onClick={() => onConfirm(finalResults, lastWordGuessed)}
           className="pointer-events-auto rounded-game bg-success px-6 py-3 font-semibold text-white shadow-sm transition hover:opacity-90"
         >
-          Confirm
+          {t.rr_confirm}
         </button>
       </div>
     </motion.div>

@@ -7,6 +7,7 @@ import {
   useTransform,
 } from "framer-motion";
 import { useEffect } from "react";
+import { useLocale } from "../contexts/LocaleContext";
 import { cn } from "../lib/cn";
 
 /** alias-main card-deck swipe */
@@ -141,6 +142,7 @@ export function GamePlayCardStack({
   isPaused,
   onSwipeCommit,
 }: GamePlayCardStackProps) {
+  const { t } = useLocale();
   const showStack = currentWord && !cheatingDetected && !isPaused;
 
   return (
@@ -182,10 +184,8 @@ export function GamePlayCardStack({
                   <span className="text-5xl" aria-hidden>
                     ⚠️
                   </span>
-                  <p className="text-xl font-bold">Cheating Detected</p>
-                  <p className="text-sm text-text/70">
-                    Too many words guessed too quickly
-                  </p>
+                  <p className="text-xl font-bold">{t.cs_cheatingTitle}</p>
+                  <p className="text-sm text-text/70">{t.cs_cheatingDesc}</p>
                 </div>
               </motion.div>
             )}
@@ -202,10 +202,8 @@ export function GamePlayCardStack({
                   <span className="text-5xl" aria-hidden>
                     ⏸️
                   </span>
-                  <p className="text-xl font-bold">Round Paused</p>
-                  <p className="text-sm text-text/70">
-                    Word is hidden until resumed
-                  </p>
+                  <p className="text-xl font-bold">{t.cs_pausedTitle}</p>
+                  <p className="text-sm text-text/70">{t.cs_pausedDesc}</p>
                 </div>
               </motion.div>
             )}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocale } from "../contexts/LocaleContext";
 import type { GameSettings, Theme } from "../types";
 
 interface GameSetupProps {
@@ -14,6 +15,7 @@ export default function GameSetup({
   onStart,
   onBack,
 }: GameSetupProps) {
+  const { t } = useLocale();
   const [selectedTeams, setSelectedTeams] = useState<string[]>([
     theme.description.teams[0],
     theme.description.teams[1] || theme.description.teams[0],
@@ -37,22 +39,12 @@ export default function GameSetup({
 
   const handleStart = () => {
     if (selectedTeams.length < 2) return;
-
-    onStart({
-      theme,
-      selectedTeams,
-      difficulty,
-      pointsRequired,
-      roundTimer,
-      skipPenalty,
-    });
+    onStart({ theme, selectedTeams, difficulty, pointsRequired, roundTimer, skipPenalty });
   };
 
   return (
     <div className="mx-auto w-full max-w-2xl rounded-game bg-card p-6 shadow-sm md:p-8">
-      <h1 className="mb-2 text-center text-3xl font-bold text-text">
-        {theme.name}
-      </h1>
+      <h1 className="mb-2 text-center text-3xl font-bold text-text">{theme.name}</h1>
       <p className="mb-6 text-center text-text/60">
         {Object.keys(theme.description.words).length} words •{" "}
         {theme.description.teams.length} teams available
@@ -60,9 +52,7 @@ export default function GameSetup({
 
       <div className="space-y-6">
         <div>
-          <label className="mb-3 block font-semibold text-text">
-            Select Teams
-          </label>
+          <label className="mb-3 block font-semibold text-text">{t.gs_selectTeams}</label>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
             {theme.description.teams.map((team) => (
               <button
@@ -80,14 +70,12 @@ export default function GameSetup({
             ))}
           </div>
           <p className="mt-2 text-sm text-text/60">
-            Selected: {selectedTeams.length} / {theme.description.teams.length}
+            {t.gs_selectedTeams(selectedTeams.length, theme.description.teams.length)}
           </p>
         </div>
 
         <div>
-          <label className="mb-2 block font-semibold text-text">
-            Difficulty
-          </label>
+          <label className="mb-2 block font-semibold text-text">{t.gs_difficulty}</label>
           <div className="flex items-center gap-1">
             {[1, 2, 3, 4, 5].map((value) => (
               <button
@@ -95,24 +83,20 @@ export default function GameSetup({
                 type="button"
                 onClick={() => setDifficulty(value)}
                 className={`rounded-full px-3 py-2 text-2xl transition focus:outline-none ${
-                  value <= difficulty
-                    ? "text-success"
-                    : "text-text/40 hover:text-success"
+                  value <= difficulty ? "text-success" : "text-text/40 hover:text-success"
                 }`}
-                aria-label={`Set difficulty to ${value}`}
+                aria-label={t.gs_setDifficulty(value)}
               >
                 ★
               </button>
             ))}
           </div>
-          <p className="mt-2 text-sm text-text/60">
-            Show words with difficulty {difficulty} or lower
-          </p>
+          <p className="mt-2 text-sm text-text/60">{t.gs_difficultyHint(difficulty)}</p>
         </div>
 
         <div>
           <label className="mb-2 block font-semibold text-text">
-            Points Required: {pointsRequired}
+            {t.gs_pointsRequired(pointsRequired)}
           </label>
           <input
             type="range"
@@ -131,7 +115,7 @@ export default function GameSetup({
 
         <div>
           <label className="mb-2 block font-semibold text-text">
-            Round Timer: {roundTimer}s
+            {t.gs_roundTimer(roundTimer)}
           </label>
           <input
             type="range"
@@ -156,7 +140,7 @@ export default function GameSetup({
               onChange={(e) => setSkipPenalty(e.target.checked)}
               className="h-5 w-5 accent-success"
             />
-            Skip Penalty
+            {t.gs_skipPenalty}
           </label>
         </div>
 
@@ -166,7 +150,7 @@ export default function GameSetup({
             onClick={onBack}
             className="flex-1 rounded-game border border-text/15 bg-text/[0.06] px-6 py-3 font-semibold text-text transition hover:bg-text/10"
           >
-            Back
+            {t.gs_back}
           </button>
           <button
             type="button"
@@ -174,7 +158,7 @@ export default function GameSetup({
             disabled={selectedTeams.length < 2}
             className="flex-1 rounded-game bg-success px-6 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Start Game
+            {t.gs_startGame}
           </button>
         </div>
       </div>

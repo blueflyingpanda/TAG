@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useLocale } from "./contexts/LocaleContext";
 import { useTheme } from "./hooks/useTheme";
 import CreateTheme from "./components/CreateTheme";
 import GameHistory from "./components/GameHistory";
@@ -38,6 +39,7 @@ type AppScreen =
 
 function App() {
   const { theme, toggle: toggleTheme } = useTheme();
+  const { t } = useLocale();
   const initialUser = storage.getUser();
   const [screen, setScreen] = useState<AppScreen>(() => {
     // Require authentication - if no user, always show login
@@ -493,7 +495,7 @@ function App() {
               <button
                 type="button"
                 onClick={toggleTheme}
-                aria-label="Toggle dark mode"
+                aria-label={t.nav_toggleDark}
                 className="relative ml-2 flex h-7 w-14 items-center rounded-full border border-text/15 bg-text/[0.07] px-1 transition-colors hover:bg-text/[0.12]"
               >
                 <span className="absolute left-1.5 text-xs">☀️</span>
@@ -521,7 +523,7 @@ function App() {
                   }`}
                   disabled={screen === "theme-selection"}
                 >
-                  Home
+                  {t.nav_home}
                 </button>
 
                 <button
@@ -534,7 +536,7 @@ function App() {
                   }`}
                   disabled={screen === "game-history"}
                 >
-                  History
+                  {t.nav_history}
                 </button>
 
                 <button
@@ -547,7 +549,7 @@ function App() {
                   }`}
                   disabled={screen === "rules"}
                 >
-                  Rules
+                  {t.nav_rules}
                 </button>
 
                 <button
@@ -555,7 +557,7 @@ function App() {
                   onClick={handleLogout}
                   className="rounded-game bg-error px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 md:text-base"
                 >
-                  Logout
+                  {t.nav_logout}
                 </button>
               </div>
             )}

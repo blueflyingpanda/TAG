@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useLocale } from "../contexts/LocaleContext";
+import type { LocaleCode } from "../i18n/translations";
 import type { Theme, ThemeListItem, ThemeOrderByType, User } from "../types";
 import { ThemeOrderBy } from "../types";
 import { createTheme, getTheme, getThemes } from "../utils/themes";
@@ -72,11 +74,13 @@ export default function ThemeSelection({
   onCreateTheme,
   onThemeDetails,
 }: ThemeSelectionProps) {
+  const { t, locale, setLocale } = useLocale();
+
   // Initialize state from URL parameters
   const initialFilters = getFiltersFromURL();
 
   const [themes, setThemes] = useState<ThemeListItem[]>([]);
-  const [selectedLang, setSelectedLang] = useState(initialFilters.selectedLang);
+  const [selectedLang, setSelectedLang] = useState(initialFilters.selectedLang || locale);
   const [onlyMyThemes, setOnlyMyThemes] = useState(initialFilters.onlyMyThemes);
   const [onlyFavorites, setOnlyFavorites] = useState(
     initialFilters.onlyFavorites,
@@ -266,32 +270,35 @@ export default function ThemeSelection({
   return (
     <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-6 shadow-sm md:p-8">
       <h1 className="mb-6 text-center text-3xl font-bold text-text">
-        Select Theme
+        {t.ts_title}
       </h1>
 
       <div className="mb-6 space-y-4">
         {/* Row 1: Filtering */}
         <div className="flex flex-wrap gap-4 items-end justify-center">
           <div>
-            <label className="mb-2 block text-text/80">Language</label>
+            <label className="mb-2 block text-text/80">{t.ts_language}</label>
             <select
               value={selectedLang}
-              onChange={(e) => setSelectedLang(e.target.value)}
+              onChange={(e) => {
+                setSelectedLang(e.target.value);
+                setLocale(e.target.value as LocaleCode);
+              }}
               className="rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
             >
-              <option value="en">English</option>
-              <option value="ru">Russian</option>
+              <option value="en">{t.ts_langEnglish}</option>
+              <option value="ru">{t.ts_langRussian}</option>
             </select>
           </div>
 
           <div className="w-full">
-            <label className="mb-2 block text-text/80">Search</label>
+            <label className="mb-2 block text-text/80">{t.ts_search}</label>
             <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search themes..."
+                placeholder={t.ts_searchPlaceholder}
                 className="w-full rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-success"
               />
               <button
@@ -299,7 +306,7 @@ export default function ThemeSelection({
                 onClick={fetchThemes}
                 className="w-full rounded-game bg-success px-4 py-2 font-semibold text-white transition hover:opacity-90 sm:w-auto"
               >
-                Search
+                {t.ts_search}
               </button>
             </div>
           </div>
@@ -308,27 +315,27 @@ export default function ThemeSelection({
         {/* Row 2: Ordering */}
         <div className="flex flex-wrap gap-4 items-end justify-center">
           <div>
-            <label className="mb-2 block text-text/80">Order By</label>
+            <label className="mb-2 block text-text/80">{t.ts_orderBy}</label>
             <select
               value={orderBy}
               onChange={(e) => setOrderBy(e.target.value as ThemeOrderByType)}
               className="rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
             >
-              <option value={ThemeOrderBy.ID}>Creation Date</option>
-              <option value={ThemeOrderBy.NAME}>Name</option>
-              <option value={ThemeOrderBy.LIKES}>Likes</option>
+              <option value={ThemeOrderBy.ID}>{t.ts_orderByDate}</option>
+              <option value={ThemeOrderBy.NAME}>{t.ts_orderByName}</option>
+              <option value={ThemeOrderBy.LIKES}>{t.ts_orderByLikes}</option>
             </select>
           </div>
 
           <div>
-            <label className="mb-2 block text-text/80">Order Direction</label>
+            <label className="mb-2 block text-text/80">{t.ts_orderDirection}</label>
             <select
               value={orderDescending ? "desc" : "asc"}
               onChange={(e) => setOrderDescending(e.target.value === "desc")}
               className="rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
             >
-              <option value="asc">Ascending</option>
-              <option value="desc">Descending</option>
+              <option value="asc">{t.ts_ascending}</option>
+              <option value="desc">{t.ts_descending}</option>
             </select>
           </div>
         </div>
@@ -345,7 +352,7 @@ export default function ThemeSelection({
                 className="w-4 h-4"
               />
               <label htmlFor="show-unverified" className="text-text/80">
-                Show unverified themes
+                {t.ts_showUnverified}
               </label>
             </div>
 
@@ -358,7 +365,7 @@ export default function ThemeSelection({
                 className="w-4 h-4"
               />
               <label htmlFor="only-my-themes" className="text-text/80">
-                Only my themes
+                {t.ts_onlyMine}
               </label>
             </div>
 
@@ -371,7 +378,7 @@ export default function ThemeSelection({
                 className="w-4 h-4"
               />
               <label htmlFor="only-favorites" className="text-text/80">
-                Only favorites
+                {t.ts_onlyFavorites}
               </label>
             </div>
           </div>
@@ -384,7 +391,7 @@ export default function ThemeSelection({
             onClick={() => setShowImportDialog(true)}
             className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
           >
-            Import Theme
+            {t.ts_import}
           </button>
 
           {user && (
@@ -393,7 +400,7 @@ export default function ThemeSelection({
               onClick={() => onCreateTheme?.()}
               className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
             >
-              Create Theme
+              {t.ts_create}
             </button>
           )}
         </div>
@@ -401,7 +408,7 @@ export default function ThemeSelection({
 
       {showUnverified && (
         <div className="mb-4 rounded-game border border-text/20 bg-card p-4 text-sm text-text">
-          Unverified themes may contain inappropriate content
+          {t.ts_unverifiedWarning}
         </div>
       )}
 
@@ -436,42 +443,21 @@ export default function ThemeSelection({
 
       {themes.length === 0 && (
         <p className="py-8 text-center text-text/60">
-          No themes available. Import or Create a theme to get started.
+          {t.ts_noThemes}
         </p>
       )}
 
       {showImportDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-game border border-text/15 bg-card p-6 shadow-lg">
-            <h2 className="mb-4 text-2xl font-bold text-text">Import Theme</h2>
+            <h2 className="mb-4 text-2xl font-bold text-text">{t.ts_importTitle}</h2>
             <textarea
               value={importJson}
               onChange={(e) => {
                 setImportJson(e.target.value);
                 setImportError("");
               }}
-              placeholder={`Paste theme JSON here...
-
-Example format:
-{
-  "name": "Harry Potter",
-  "language": "en",
-  "description": {
-    "teams": [
-      "Gryffindor",
-      "Dumbledore's Army",
-      "Order of the Phoenix",
-      ...
-    ],
-    "words": {
-      "Tom Marvolo Riddle": { "difficulty": 1 },
-      "Alohomora": { "difficulty": 1 },
-      "Elder Wand": { "difficulty": 1 },
-      "Deluminator": { "difficulty": 1 },
-      ...
-    }
-  }
-}`}
+              placeholder={t.ts_importPlaceholder}
               className="h-64 w-full rounded-game border border-text/15 bg-card p-4 font-mono text-sm text-text placeholder:text-text/40 focus:outline-none focus:ring-2 focus:ring-success"
             />
             <div className="mt-4 flex items-center gap-2">
@@ -483,7 +469,7 @@ Example format:
                 className="h-4 w-4 accent-success"
               />
               <label htmlFor="import-public" className="text-text/80">
-                Public
+                {t.ts_public}
               </label>
             </div>
             {importError && (
@@ -495,7 +481,7 @@ Example format:
                 onClick={handleImport}
                 className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
               >
-                Import
+                {t.ts_importBtn}
               </button>
               <button
                 type="button"
@@ -507,7 +493,7 @@ Example format:
                 }}
                 className="rounded-game border border-text/15 bg-text/[0.06] px-6 py-2 font-semibold text-text transition hover:bg-text/10"
               >
-                Cancel
+                {t.ts_cancel}
               </button>
             </div>
           </div>

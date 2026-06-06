@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "../contexts/LocaleContext";
 import type { GameState } from "../types";
 import { Button } from "../ui/Button";
 import { Countdown } from "../ui/Countdown";
@@ -26,6 +27,7 @@ export default function GamePlay({
   onRoundEnd,
   onGameEnd,
 }: GamePlayProps) {
+  const { t } = useLocale();
   const [currentWord, setCurrentWord] = useState("");
   const [roundWords, setRoundWords] = useState<string[]>([]);
   const [roundResults, setRoundResults] = useState<
@@ -388,11 +390,11 @@ export default function GamePlay({
             transition={{ duration: 0.5 }}
           >
             <div className="mb-3 text-5xl">🎉</div>
-            <h1 className="mb-4 text-4xl font-bold text-text">Game Over!</h1>
+            <h1 className="mb-4 text-4xl font-bold text-text">{t.gp_gameOver}</h1>
             <h2 className="mb-6 text-2xl font-semibold text-success">
               {winners.length === 1
-                ? `${winners[0]} Wins!`
-                : `${winners.join(" & ")} Win!`}
+                ? t.gp_singleWinner(winners[0])
+                : t.gp_multipleWinners(winners.join(" & "))}
             </h2>
 
             <div className="space-y-3">
@@ -419,7 +421,7 @@ export default function GamePlay({
             onClick={onGameEnd}
             className="pointer-events-auto rounded-game bg-success px-6 py-3 font-semibold text-white shadow-sm transition hover:opacity-90"
           >
-            New Game
+            {t.gp_newGame}
           </button>
         </div>
       </div>
@@ -435,14 +437,14 @@ export default function GamePlay({
           animate={{ scale: 1, opacity: 1 }}
         >
           <h2 className="text-3xl font-bold text-text">
-            Round {gameState.currentRound}
+            {t.gp_round(gameState.currentRound)}
           </h2>
           <div className="mx-auto w-full truncate text-lg font-bold text-success">
             {currentTeam}
           </div>
 
           <div className="space-y-4 rounded-game border border-text/10 bg-text/[0.04] p-6">
-            <h3 className="text-lg font-semibold text-text">Current Scores</h3>
+            <h3 className="text-lg font-semibold text-text">{t.gp_currentScores}</h3>
             {Object.entries(gameState.teamScores).map(([team, score]) => (
               <div
                 key={team}
@@ -450,14 +452,14 @@ export default function GamePlay({
               >
                 <span>{team}</span>
                 <span className="font-bold">
-                  {score} / {gameState.settings.pointsRequired}
+                  {t.gp_score(score, gameState.settings.pointsRequired)}
                 </span>
               </div>
             ))}
           </div>
 
           <p className="text-text/70">
-            {availableWords.length} words remaining
+            {t.gp_wordsRemaining(availableWords.length)}
           </p>
 
           <motion.button
@@ -467,7 +469,7 @@ export default function GamePlay({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            Start Round
+            {t.gp_startRound}
           </motion.button>
         </motion.div>
       </div>
@@ -478,7 +480,7 @@ export default function GamePlay({
     <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-transparent p-2 md:p-4">
       <div className="absolute left-0 right-0 top-0 flex items-center justify-between p-1 md:p-6">
         <div className="text-base font-semibold text-text md:text-lg">
-          Round {gameState.currentRound}
+          {t.gp_round(gameState.currentRound)}
         </div>
         <div className="max-w-xs truncate text-base font-bold text-success md:text-lg">
           {currentTeam}
@@ -494,14 +496,14 @@ export default function GamePlay({
         <div className="flex items-center gap-6 text-text/60">
           <div className="flex flex-col items-center gap-0.5">
             <Counter variant="error" value={skippedThisRound} />
-            <span className="text-xs">Skipped</span>
+            <span className="text-xs">{t.gp_skipped}</span>
           </div>
           <span className="pt-1 text-xs">
             {roundResults.length} / {roundWords.length}
           </span>
           <div className="flex flex-col items-center gap-0.5">
             <Counter variant="success" value={guessedThisRound} />
-            <span className="text-xs">Guessed</span>
+            <span className="text-xs">{t.gp_guessed}</span>
           </div>
         </div>
       </div>
@@ -515,7 +517,7 @@ export default function GamePlay({
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            Cheating detected — wait for round to end
+            {t.gp_cheatingDetected}
           </motion.div>
         )}
 
@@ -527,7 +529,7 @@ export default function GamePlay({
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            Round paused — finish the round so data can be saved
+            {t.gp_roundPaused}
           </motion.div>
         )}
       </AnimatePresence>
@@ -555,7 +557,7 @@ export default function GamePlay({
                 onClick={() => handleWordAction(false)}
                 className="!flex-1 !py-3 text-sm md:!py-4 md:text-base"
               >
-                Skip ❌
+                {t.gp_skipBtn}
               </Button>
               <Button
                 type="button"
@@ -564,7 +566,7 @@ export default function GamePlay({
                 onClick={() => handleWordAction(true)}
                 className="!flex-1 !py-3 text-sm md:!py-4 md:text-base"
               >
-                Guessed ✅
+                {t.gp_guessedBtn}
               </Button>
             </div>
 
@@ -576,11 +578,11 @@ export default function GamePlay({
                 onClick={stopRound}
                 className="!w-auto !px-5 !py-2.5 text-sm md:!py-3 md:text-base"
               >
-                ⏸️ {roundPausedOnce ? "Paused" : "Pause"}
+                ⏸️ {roundPausedOnce ? t.gp_paused : t.gp_pause}
               </Button>
             </div>
             <p className="mt-2 text-center text-xs text-text/50 hidden md:block">
-              Desktop shortcut: ← Skip, → Guessed
+              {t.gp_shortcutHint}
             </p>
           </div>
         ) : (
@@ -591,7 +593,7 @@ export default function GamePlay({
               onClick={resumeRound}
               className="!w-auto !px-6 !py-2.5 text-sm md:!py-3 md:text-base"
             >
-              ▶️ Resume
+              {t.gp_resume}
             </Button>
           </div>
         )}
