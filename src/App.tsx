@@ -39,7 +39,7 @@ type AppScreen =
 
 function App() {
   const { theme, toggle: toggleTheme } = useTheme();
-  const { t } = useLocale();
+  const { t, locale, setLocale } = useLocale();
   const initialUser = storage.getUser();
   const [screen, setScreen] = useState<AppScreen>(() => {
     // Require authentication - if no user, always show login
@@ -475,28 +475,43 @@ function App() {
         }`}
       >
         {user && (
-          <div className="mb-4 text-center text-text">
-            <div className="flex items-center justify-center gap-4">
-              {user.picture && (
-                <img
-                  src={user.picture}
-                  alt="Profile"
-                  className="h-8 w-8 rounded-full border-2 border-text/15"
-                />
-              )}
-              <div className="text-left">
-                <div className="text-sm font-semibold text-text">
-                  {user.username}
+          <div className="mb-4 text-text">
+            <div className="flex items-center justify-between gap-2">
+              {/* Language pill — left */}
+              <button
+                type="button"
+                onClick={() => setLocale(locale === "en" ? "ru" : "en")}
+                aria-label="Switch language"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-text/15 bg-text/[0.07] text-base transition-colors hover:bg-text/[0.12]"
+              >
+                {locale === "en" ? "🇬🇧" : "🇷🇺"}
+              </button>
+
+              {/* User info — center */}
+              <div className="flex items-center gap-3">
+                {user.picture && (
+                  <img
+                    src={user.picture}
+                    alt={t.nav_profileAlt}
+                    className="h-8 w-8 rounded-full border-2 border-text/15"
+                  />
+                )}
+                <div className="text-left">
+                  <div className="text-sm font-semibold text-text">
+                    {user.username}
+                  </div>
+                  {user.email ? (
+                    <div className="text-sm text-text/80">{user.email}</div>
+                  ) : null}
                 </div>
-                {user.email ? (
-                  <div className="text-sm text-text/80">{user.email}</div>
-                ) : null}
               </div>
+
+              {/* Dark mode toggle — right */}
               <button
                 type="button"
                 onClick={toggleTheme}
                 aria-label={t.nav_toggleDark}
-                className="relative ml-2 flex h-7 w-14 items-center rounded-full border border-text/15 bg-text/[0.07] px-1 transition-colors hover:bg-text/[0.12]"
+                className="relative flex h-7 w-14 items-center rounded-full border border-text/15 bg-text/[0.07] px-1 transition-colors hover:bg-text/[0.12]"
               >
                 <span className="absolute left-1.5 text-xs">☀️</span>
                 <span className="absolute right-1.5 text-xs">🌙</span>

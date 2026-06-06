@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useLocale } from "../contexts/LocaleContext";
-import type { LocaleCode } from "../i18n/translations";
 import type { Theme, ThemeListItem, ThemeOrderByType, User } from "../types";
 import { ThemeOrderBy } from "../types";
 import { createTheme, getTheme, getThemes } from "../utils/themes";
@@ -74,13 +73,13 @@ export default function ThemeSelection({
   onCreateTheme,
   onThemeDetails,
 }: ThemeSelectionProps) {
-  const { t, locale, setLocale } = useLocale();
+  const { t } = useLocale();
 
   // Initialize state from URL parameters
   const initialFilters = getFiltersFromURL();
 
   const [themes, setThemes] = useState<ThemeListItem[]>([]);
-  const [selectedLang, setSelectedLang] = useState(initialFilters.selectedLang || locale);
+  const [selectedLang, setSelectedLang] = useState(initialFilters.selectedLang);
   const [onlyMyThemes, setOnlyMyThemes] = useState(initialFilters.onlyMyThemes);
   const [onlyFavorites, setOnlyFavorites] = useState(
     initialFilters.onlyFavorites,
@@ -280,10 +279,7 @@ export default function ThemeSelection({
             <label className="mb-2 block text-text/80">{t.ts_language}</label>
             <select
               value={selectedLang}
-              onChange={(e) => {
-                setSelectedLang(e.target.value);
-                setLocale(e.target.value as LocaleCode);
-              }}
+              onChange={(e) => setSelectedLang(e.target.value)}
               className="rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
             >
               <option value="en">{t.ts_langEnglish}</option>
