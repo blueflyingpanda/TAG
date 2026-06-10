@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://blueflyingpanda.github.io/TAG/sitemap.xml
