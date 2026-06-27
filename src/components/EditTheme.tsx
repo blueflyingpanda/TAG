@@ -16,7 +16,7 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [isPublic, setIsPublic] = useState(false);
-  const [newWordTexts, setNewWordTexts] = useState<string[]>([""]);
+  const [newWords, setNewWords] = useState<{ text: string; difficulty: number }[]>([{ text: "", difficulty: 1 }]);
   const [isSaving, setIsSaving] = useState(false);
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
   const [error, setError] = useState("");
@@ -51,7 +51,7 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
       setTheme(updated);
     } catch (err) {
       setVisibilityError(
-        err instanceof Error && err.message === 'forbidden'
+        err instanceof Error && err.message === "forbidden"
           ? t.et_errForbidden
           : t.et_errVisibility,
       );
@@ -60,15 +60,18 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
     }
   };
 
-  const addWord = () => setNewWordTexts([...newWordTexts, ""]);
-
-  const updateWord = (i: number, val: string) => {
-    const next = [...newWordTexts];
-    next[i] = val;
-    setNewWordTexts(next);
+  const addWord = () => setNewWords([...newWords, { text: "", difficulty: 1 }]);
+  const removeWord = (i: number) => setNewWords(newWords.filter((_, idx) => idx !== i));
+  const updateWordText = (i: number, val: string) => {
+    const next = [...newWords];
+    next[i] = { ...next[i], text: val };
+    setNewWords(next);
   };
-
-  const removeWord = (i: number) => setNewWordTexts(newWordTexts.filter((_, idx) => idx !== i));
+  const updateWordDifficulty = (i: number, difficulty: number) => {
+    const next = [...newWords];
+    next[i] = { ...next[i], difficulty };
+    setNewWords(next);
+  };
 
   const handleSave = async () => {
     if (!theme) return;
@@ -78,15 +81,16 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
     if (name.length > 64) { setError(t.ct_errNameTooLong); return; }
     if (name.trim().split(/\s+/).length > 10) { setError(t.ct_errNameTooManyWords); return; }
 
-    const validNew = newWordTexts.map((w) => w.trim()).filter(Boolean);
+    const validNew = newWords.filter((w) => w.text.trim());
 
-    for (const word of validNew) {
-      if (word.length > 64) { setError(t.ct_errWordTooLong(word)); return; }
-      if (word.split(/\s+/).length > 10) { setError(t.ct_errWordTooManyWords(word)); return; }
+    for (const { text } of validNew) {
+      if (text.length > 64) { setError(t.ct_errWordTooLong(text)); return; }
+      if (text.split(/\s+/).length > 10) { setError(t.ct_errWordTooManyWords(text)); return; }
+      if (text.trim().length === 0) continue;
     }
 
-    // Duplicates within the new words list
-    const newLower = validNew.map((w) => w.toLowerCase());
+    // Duplicates within new words list
+    const newLower = validNew.map((w) => w.text.trim().toLowerCase());
     if (new Set(newLower).size !== newLower.length) {
       const seen = new Set<string>();
       const dupes = newLower.filter((w) => { if (seen.has(w)) return true; seen.add(w); return false; });
@@ -96,9 +100,9 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
 
     // Duplicates against existing words
     const existingLower = new Set(Object.keys(theme.description.words).map((w) => w.toLowerCase()));
-    const clashes = validNew.filter((w) => existingLower.has(w.toLowerCase()));
+    const clashes = validNew.filter((w) => existingLower.has(w.text.trim().toLowerCase()));
     if (clashes.length > 0) {
-      setError(t.et_errWordDuplicate(clashes.slice(0, 3).map((w) => `"${w}"`).join(", ")));
+      setError(t.et_errWordDuplicate(clashes.slice(0, 3).map((w) => `"${w.text.trim()}"`).join(", ")));
       return;
     }
 
@@ -106,7 +110,7 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
     try {
       const mergedWords = {
         ...theme.description.words,
-        ...Object.fromEntries(validNew.map((w) => [w, { difficulty: 1 as const }])),
+        ...Object.fromEntries(validNew.map((w) => [w.text.trim(), { difficulty: w.difficulty }])),
       };
       const updated = await updateTheme(theme.id, {
         name: name.trim(),
@@ -115,7 +119,7 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
       onSaved(updated);
     } catch (err) {
       setError(
-        err instanceof Error && err.message === 'forbidden'
+        err instanceof Error && err.message === "forbidden"
           ? t.et_errForbidden
           : t.et_errFailed,
       );
@@ -155,10 +159,6 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
   return (
     <div className="mx-auto max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-game bg-card p-6 shadow-sm md:p-8">
       <h1 className="mb-6 text-center text-3xl font-bold text-text">{t.et_title}</h1>
-
-      {error && (
-        <div className="mb-4 rounded-game border border-error/40 bg-error/10 p-4 text-sm text-error">{error}</div>
-      )}
 
       <div className="space-y-6">
         {/* Name */}
@@ -229,17 +229,35 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
           <label className="mb-1 block font-semibold text-text">{t.et_addWordsLabel}</label>
           <p className="mb-3 text-sm text-text/60">{t.et_addWordsHint}</p>
           <div className="max-h-64 space-y-2 overflow-y-auto">
-            {newWordTexts.map((word, i) => (
-              <div key={i} className="flex gap-2">
+            {newWords.map((word, i) => (
+              <div key={i} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
                   type="text"
-                  value={word}
-                  onChange={(e) => updateWord(i, e.target.value)}
+                  value={word.text}
+                  onChange={(e) => updateWordText(i, e.target.value)}
                   placeholder={t.ct_wordPlaceholder(i + 1)}
                   className={`flex-1 text-sm ${inputClass}`}
                   maxLength={64}
                 />
-                {newWordTexts.length > 1 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-text/80">{t.ct_difficulty}</span>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => updateWordDifficulty(i, level)}
+                        className={`rounded-full px-2 py-1 text-base transition ${
+                          level <= word.difficulty ? "text-success" : "text-text/40"
+                        }`}
+                        aria-label={t.ct_setDifficulty(level)}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {newWords.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeWord(i)}
@@ -258,6 +276,13 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
           >
             {t.ct_addWord}
           </button>
+
+          {/* Error shown here, under the words section */}
+          {error && (
+            <div className="mt-3 rounded-game border border-error/40 bg-error/10 p-3 text-sm text-error">
+              {error}
+            </div>
+          )}
         </div>
 
         {/* Actions */}

@@ -28,7 +28,10 @@ import { storage } from "./utils/storage";
 const screenTransition = { ease: "easeInOut" as const, duration: 0.2 };
 
 function getDeepLinkThemeId(): number | null {
-  const match = window.location.pathname.match(/\/theme\/(\d+)\/?$/);
+  // GitHub Pages 404 hack: direct URL gets redirected to /?redirect=%2FTAG%2Ftheme%2F29%2F
+  const redirect = new URLSearchParams(window.location.search).get('redirect');
+  const pathToCheck = redirect ?? window.location.pathname;
+  const match = pathToCheck.match(/\/theme\/(\d+)\/?$/);
   return match ? parseInt(match[1], 10) : null;
 }
 
@@ -119,6 +122,17 @@ function App() {
       // Don't block gameplay if API update fails
     }
   };
+
+  // Replace ?redirect=/TAG/theme/29/ with the clean canonical URL on first load
+  useEffect(() => {
+    const redirect = new URLSearchParams(window.location.search).get('redirect');
+    if (redirect) {
+      const match = redirect.match(/\/theme\/(\d+)\/?$/);
+      if (match) {
+        window.history.replaceState({}, '', `/TAG/theme/${match[1]}/`);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const handleAuthStartup = async () => {
@@ -609,6 +623,7 @@ function App() {
                 onThemeDetails={(themeId, filters) => {
                   setSelectedThemeId(themeId);
                   setThemeFilters(filters || null);
+                  window.history.pushState({}, '', `/TAG/theme/${themeId}/`);
                   setScreen("theme-details");
                 }}
               />
@@ -619,11 +634,8 @@ function App() {
                 themeId={selectedThemeId}
                 filters={themeFilters || undefined}
                 onBack={(filters) => {
-                  if (filters) {
-                    const url = new URL(window.location.href);
-                    url.search = filters.toString();
-                    window.history.replaceState({}, "", url.toString());
-                  }
+                  const search = filters?.toString() ? `?${filters.toString()}` : '';
+                  window.history.pushState({}, '', `/TAG/${search}`);
                   setScreen("theme-selection");
                 }}
                 onThemeSelect={handleThemeSelect}
