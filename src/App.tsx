@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocale } from "./contexts/LocaleContext";
 import { useTheme } from "./hooks/useTheme";
 import CreateTheme from "./components/CreateTheme";
+import EditTheme from "./components/EditTheme";
 import GameHistory from "./components/GameHistory";
 import GamePlay from "./components/GamePlay";
 import GameSetup from "./components/GameSetup";
@@ -26,10 +27,16 @@ import { storage } from "./utils/storage";
 
 const screenTransition = { ease: "easeInOut" as const, duration: 0.2 };
 
+function getDeepLinkThemeId(): number | null {
+  const match = window.location.pathname.match(/\/theme\/(\d+)\/?$/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
 type AppScreen =
   | "login"
   | "theme-selection"
   | "theme-details"
+  | "edit-theme"
   | "game-setup"
   | "game-play"
   | "round-results"
@@ -42,15 +49,17 @@ function App() {
   const { t, locale, setLocale } = useLocale();
   const initialUser = storage.getUser();
   const [screen, setScreen] = useState<AppScreen>(() => {
-    // Require authentication - if no user, always show login
     if (!initialUser) return "login";
     const savedState = storage.getGameState();
     if (savedState) return "game-play";
+    if (getDeepLinkThemeId()) return "theme-details";
     return "theme-selection";
   });
   const [user, setUser] = useState<User | null>(initialUser);
   const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
-  const [selectedThemeId, setSelectedThemeId] = useState<number | null>(null);
+  const [selectedThemeId, setSelectedThemeId] = useState<number | null>(
+    initialUser ? getDeepLinkThemeId() : null,
+  );
   const [themeFilters, setThemeFilters] = useState<URLSearchParams | null>(
     null,
   );
@@ -126,7 +135,9 @@ function App() {
           if (userData) {
             storage.saveUser(userData);
             setUser(userData);
-            setScreen("theme-selection");
+            const deepId = getDeepLinkThemeId();
+            if (deepId) { setSelectedThemeId(deepId); setScreen("theme-details"); }
+            else setScreen("theme-selection");
           }
           return;
         } catch (err) {
@@ -153,12 +164,13 @@ function App() {
       try {
         await exchangeOAuthCode(code);
         clearOAuthCallback();
-        // Get user data from the new token
         const userData = getCurrentUser();
         if (userData) {
           storage.saveUser(userData);
           setUser(userData);
-          setScreen("theme-selection");
+          const deepId = getDeepLinkThemeId();
+          if (deepId) { setSelectedThemeId(deepId); setScreen("theme-details"); }
+          else setScreen("theme-selection");
         }
       } catch (err) {
         console.error("OAuth exchange failed:", err);
@@ -615,6 +627,15 @@ function App() {
                   setScreen("theme-selection");
                 }}
                 onThemeSelect={handleThemeSelect}
+                onEdit={() => setScreen("edit-theme")}
+              />
+            )}
+            {screen === "edit-theme" && user && selectedThemeId && (
+              <EditTheme
+                user={user}
+                themeId={selectedThemeId}
+                onBack={() => setScreen("theme-details")}
+                onSaved={() => setScreen("theme-details")}
               />
             )}
             {screen === "create-theme" && user && (

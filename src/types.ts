@@ -53,6 +53,18 @@ export interface ThemePayload {
   };
 }
 
+export interface ThemeDescriptionPayload {
+  name?: string;
+  description: {
+    words: Record<string, ThemeWordMeta>;
+    teams: string[];
+  };
+}
+
+export interface ThemeVisibilityPayload {
+  public: boolean;
+}
+
 export interface PaginatedThemes {
   items: ThemeListItem[];
   total: number;

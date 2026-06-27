@@ -1,4 +1,4 @@
-import type { PaginatedThemes, Theme, ThemePayload } from '../types';
+import type { PaginatedThemes, Theme, ThemeDescriptionPayload, ThemePayload, ThemeVisibilityPayload } from '../types';
 import { API_BASE } from './config';
 import { authenticatedFetch } from './oauth';
 
@@ -123,6 +123,61 @@ export async function removeThemeFromFavorites(themeId: number): Promise<void> {
   if (!response.ok) {
     throw new Error(`Failed to remove theme from favorites: ${response.statusText}`);
   }
+}
+
+/**
+ * Update a theme's description (words and teams) via PUT.
+ * Does not affect public/private visibility.
+ */
+export async function updateTheme(themeId: number, payload: ThemeDescriptionPayload): Promise<Theme> {
+  const response = await authenticatedFetch(`${API_BASE}/themes/${themeId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) throw new Error('Theme not found');
+    if (response.status === 403) throw new Error('forbidden');
+    throw new Error(`Failed to update theme: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  return {
+    ...data,
+    likes_count: data.likes,
+    is_favorited: data.favourite,
+  };
+}
+
+/**
+ * Toggle a theme's public/private visibility via PATCH.
+ */
+export async function patchThemeVisibility(themeId: number, payload: ThemeVisibilityPayload): Promise<Theme> {
+  const response = await authenticatedFetch(`${API_BASE}/themes/${themeId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    if (response.status === 404) throw new Error('Theme not found');
+    if (response.status === 403) throw new Error('forbidden');
+    throw new Error(`Failed to update theme visibility: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  return {
+    ...data,
+    likes_count: data.likes,
+    is_favorited: data.favourite,
+  };
 }
 
 /**

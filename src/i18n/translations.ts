@@ -56,6 +56,8 @@ export interface Translations {
   td_moreWords: (count: number) => string;
   td_failedLoad: string;
   td_failedFavorite: string;
+  td_share: string;
+  td_copied: string;
 
   // GameSetup
   gs_selectTeams: string;
@@ -164,6 +166,23 @@ export interface Translations {
   ct_errWordTooManyWords: (word: string) => string;
   ct_errWordDifficulty: (word: string) => string;
   ct_errFailed: string;
+
+  // EditTheme
+  et_title: string;
+  et_edit: string;
+  et_save: string;
+  et_saving: string;
+  et_nameLabel: string;
+  et_visibilityLabel: string;
+  et_addWordsLabel: string;
+  et_addWordsHint: string;
+  et_existingWords: (count: number) => string;
+  et_teamsLabel: string;
+  et_updatingVisibility: string;
+  et_errWordDuplicate: (words: string) => string;
+  et_errForbidden: string;
+  et_errFailed: string;
+  et_errVisibility: string;
 
   // Rules
   rules_title: string;
@@ -279,6 +298,8 @@ export const en: Translations = {
   td_moreWords: (count) => `... and ${count} more words`,
   td_failedLoad: "Failed to load theme details",
   td_failedFavorite: "Failed to update favorite status",
+  td_share: "Share",
+  td_copied: "Copied!",
 
   gs_selectTeams: "Select Teams",
   gs_selectedTeams: (s, t) => `Selected: ${s} / ${t}`,
@@ -382,6 +403,22 @@ export const en: Translations = {
   ct_errWordTooManyWords: (word) => `Word "${word}" must be 10 words or less`,
   ct_errWordDifficulty: (word) => `Word "${word}" must have a difficulty between 1 and 5`,
   ct_errFailed: "Failed to create theme",
+
+  et_title: "Edit Theme",
+  et_edit: "Edit",
+  et_save: "Save Changes",
+  et_saving: "Saving...",
+  et_nameLabel: "Theme Name",
+  et_visibilityLabel: "Visibility",
+  et_addWordsLabel: "Add New Words",
+  et_addWordsHint: "Existing words cannot be edited or removed",
+  et_existingWords: (count) => `Existing Words (${count})`,
+  et_teamsLabel: "Teams (read-only)",
+  et_updatingVisibility: "Updating...",
+  et_errWordDuplicate: (words) => `Words already exist in this theme: ${words}`,
+  et_errForbidden: "You don't have permission to edit this theme",
+  et_errFailed: "Failed to save changes",
+  et_errVisibility: "Failed to update visibility",
 
   rules_title: "Alias Game Rules",
   rules_basicGameplay: "Basic Gameplay",
@@ -495,6 +532,8 @@ export const ru: Translations = {
   td_moreWords: (count) => `... и ещё ${count} слов`,
   td_failedLoad: "Не удалось загрузить тему",
   td_failedFavorite: "Не удалось обновить статус",
+  td_share: "Поделиться",
+  td_copied: "Скопировано!",
 
   gs_selectTeams: "Выбор команд",
   gs_selectedTeams: (s, total) => `Выбрано: ${s} / ${total}`,
@@ -598,6 +637,22 @@ export const ru: Translations = {
   ct_errWordTooManyWords: (word) => `Слово "${word}" не более 10 слов`,
   ct_errWordDifficulty: (word) => `Слово "${word}" должно иметь сложность от 1 до 5`,
   ct_errFailed: "Не удалось создать тему",
+
+  et_title: "Редактировать тему",
+  et_edit: "Редактировать",
+  et_save: "Сохранить",
+  et_saving: "Сохранение...",
+  et_nameLabel: "Название темы",
+  et_visibilityLabel: "Видимость",
+  et_addWordsLabel: "Добавить слова",
+  et_addWordsHint: "Существующие слова нельзя редактировать или удалять",
+  et_existingWords: (count) => `Существующие слова (${count})`,
+  et_teamsLabel: "Команды (только просмотр)",
+  et_updatingVisibility: "Обновление...",
+  et_errWordDuplicate: (words) => `Слова уже существуют в теме: ${words}`,
+  et_errForbidden: "У вас нет прав для редактирования этой темы",
+  et_errFailed: "Не удалось сохранить изменения",
+  et_errVisibility: "Не удалось обновить видимость",
 
   rules_title: "Правила игры Alias",
   rules_basicGameplay: "Основной геймплей",

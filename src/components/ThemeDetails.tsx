@@ -8,6 +8,7 @@ interface ThemeDetailsProps {
   themeId: number;
   onBack: (filters?: URLSearchParams) => void;
   onThemeSelect?: (theme: Theme) => void;
+  onEdit?: () => void;
   filters?: URLSearchParams;
 }
 
@@ -16,6 +17,7 @@ export default function ThemeDetails({
   themeId,
   onBack,
   onThemeSelect,
+  onEdit,
   filters,
 }: ThemeDetailsProps) {
   const { t } = useLocale();
@@ -23,6 +25,7 @@ export default function ThemeDetails({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  const [copied, setCopied] = useState(false);
   const wordList = theme ? Object.keys(theme.description.words) : [];
 
   useEffect(() => {
@@ -108,6 +111,30 @@ export default function ThemeDetails({
               } disabled:opacity-50`}
             >
               {theme.is_favorited ? "❤️" : "🤍"} {theme.likes_count || 0}
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(
+                `https://blueflyingpanda.github.io/TAG/theme/${theme.id}/`,
+              );
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="rounded-game border border-text/15 bg-text/[0.06] px-4 py-2 font-semibold text-text transition hover:bg-text/10"
+          >
+            {copied ? t.td_copied : t.td_share}
+          </button>
+
+          {onEdit && (user.admin || user.email === theme.creator?.email) && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="rounded-game border border-text/15 bg-text/[0.06] px-4 py-2 font-semibold text-text transition hover:bg-text/10"
+            >
+              {t.et_edit}
             </button>
           )}
 
