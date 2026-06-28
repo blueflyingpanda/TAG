@@ -35,6 +35,18 @@ function getDeepLinkThemeId(): number | null {
   return match ? parseInt(match[1], 10) : null;
 }
 
+const PENDING_THEME_KEY = 'tag_pending_theme_id';
+
+function consumePendingThemeId(): number | null {
+  const stored = sessionStorage.getItem(PENDING_THEME_KEY);
+  if (stored) {
+    sessionStorage.removeItem(PENDING_THEME_KEY);
+    const id = parseInt(stored, 10);
+    return isNaN(id) ? null : id;
+  }
+  return null;
+}
+
 type AppScreen =
   | "login"
   | "theme-selection"
@@ -123,8 +135,14 @@ function App() {
     }
   };
 
-  // Replace ?redirect=/TAG/theme/29/ with the clean canonical URL on first load
+  // Replace ?redirect=/TAG/theme/29/ with the clean canonical URL on first load.
+  // Also persist the theme ID to sessionStorage so it survives the OAuth redirect.
   useEffect(() => {
+    const deepId = getDeepLinkThemeId();
+    if (deepId && !initialUser) {
+      sessionStorage.setItem(PENDING_THEME_KEY, String(deepId));
+    }
+
     const redirect = new URLSearchParams(window.location.search).get('redirect');
     if (redirect) {
       const match = redirect.match(/\/theme\/(\d+)\/?$/);
@@ -149,8 +167,8 @@ function App() {
           if (userData) {
             storage.saveUser(userData);
             setUser(userData);
-            const deepId = getDeepLinkThemeId();
-            if (deepId) { setSelectedThemeId(deepId); setScreen("theme-details"); }
+            const pendingId = consumePendingThemeId() ?? getDeepLinkThemeId();
+            if (pendingId) { setSelectedThemeId(pendingId); setScreen("theme-details"); }
             else setScreen("theme-selection");
           }
           return;
@@ -182,8 +200,8 @@ function App() {
         if (userData) {
           storage.saveUser(userData);
           setUser(userData);
-          const deepId = getDeepLinkThemeId();
-          if (deepId) { setSelectedThemeId(deepId); setScreen("theme-details"); }
+          const pendingId = consumePendingThemeId() ?? getDeepLinkThemeId();
+          if (pendingId) { setSelectedThemeId(pendingId); setScreen("theme-details"); }
           else setScreen("theme-selection");
         }
       } catch (err) {
