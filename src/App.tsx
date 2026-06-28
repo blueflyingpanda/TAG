@@ -279,6 +279,8 @@ function App() {
     storage.clearUser();
     storage.clearGameState();
     localStorage.removeItem("tag_current_game_id");
+    sessionStorage.removeItem(PENDING_THEME_KEY);
+    window.history.pushState({}, '', '/TAG/');
     setUser(null);
     setGameState(null);
     setScreen("login");
@@ -578,6 +580,7 @@ function App() {
                 <button
                   type="button"
                   onClick={() => {
+                    window.history.pushState({}, '', '/TAG/');
                     setScreen("theme-selection");
                     setSelectedTheme(null);
                   }}
@@ -593,7 +596,7 @@ function App() {
 
                 <button
                   type="button"
-                  onClick={() => setScreen("game-history")}
+                  onClick={() => { window.history.pushState({}, '', '/TAG/'); setScreen("game-history"); }}
                   className={`rounded-game px-4 py-2 text-sm font-semibold transition md:text-base ${
                     screen === "game-history"
                       ? "cursor-default bg-success text-white"
@@ -606,7 +609,7 @@ function App() {
 
                 <button
                   type="button"
-                  onClick={() => setScreen("rules")}
+                  onClick={() => { window.history.pushState({}, '', '/TAG/'); setScreen("rules"); }}
                   className={`rounded-game px-4 py-2 text-sm font-semibold transition md:text-base ${
                     screen === "rules"
                       ? "cursor-default bg-success text-white"
