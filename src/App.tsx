@@ -168,8 +168,11 @@ function App() {
             storage.saveUser(userData);
             setUser(userData);
             const pendingId = consumePendingThemeId() ?? getDeepLinkThemeId();
-            if (pendingId) { setSelectedThemeId(pendingId); setScreen("theme-details"); }
-            else setScreen("theme-selection");
+            if (pendingId) {
+              window.history.replaceState({}, '', `/TAG/theme/${pendingId}/`);
+              setSelectedThemeId(pendingId);
+              setScreen("theme-details");
+            } else setScreen("theme-selection");
           }
           return;
         } catch (err) {
@@ -201,8 +204,11 @@ function App() {
           storage.saveUser(userData);
           setUser(userData);
           const pendingId = consumePendingThemeId() ?? getDeepLinkThemeId();
-          if (pendingId) { setSelectedThemeId(pendingId); setScreen("theme-details"); }
-          else setScreen("theme-selection");
+          if (pendingId) {
+            window.history.replaceState({}, '', `/TAG/theme/${pendingId}/`);
+            setSelectedThemeId(pendingId);
+            setScreen("theme-details");
+          } else setScreen("theme-selection");
         }
       } catch (err) {
         console.error("OAuth exchange failed:", err);
