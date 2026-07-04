@@ -145,6 +145,7 @@ export interface Translations {
   ct_teamsError: string;
   ct_wordsLabel: string;
   ct_importFromText: string;
+  ct_importPrompt: string;
   ct_wordPlaceholder: (index: number) => string;
   ct_difficulty: string;
   ct_setDifficulty: (level: number) => string;
@@ -277,7 +278,7 @@ export const en: Translations = {
   ts_unverifiedWarning: "Unverified themes may contain inappropriate content",
   ts_noThemes: "No themes available. Import or Create a theme to get started.",
   ts_importTitle: "Import Theme",
-  ts_importPlaceholder: `Paste theme JSON here...\n\nExample format:\n{\n  "name": "My Theme",\n  "language": "en",\n  "description": {\n    "teams": ["Team 1", ...],\n    "words": { "word": 1, ... }\n  }\n}`,
+  ts_importPlaceholder: `Paste theme JSON here...\n\nExample format:\n{\n  "name": "My Theme",\n  "language": "en",\n  "description": {\n    "teams": ["Team 1", ...],\n    "words": { "word": { "difficulty": 1 }, ... }\n  }\n}`,
   ts_public: "Public",
   ts_importBtn: "Import",
   ts_cancel: "Cancel",
@@ -382,6 +383,8 @@ export const en: Translations = {
   ct_teamsError: "You must provide exactly 10 filled team names to create a theme.",
   ct_wordsLabel: "Words * (at least 30 difficulty 1 words, each max 64 chars, max 10 words)",
   ct_importFromText: "Import from Text (one per line)",
+  ct_importPrompt:
+    'Paste one word per line, or JSON like {"hello": {"difficulty": 1}, "world": {"difficulty": 3}}:',
   ct_wordPlaceholder: (i) => `Word ${i}`,
   ct_difficulty: "Difficulty",
   ct_setDifficulty: (level) => `Set difficulty to ${level}`,
@@ -511,7 +514,7 @@ export const ru: Translations = {
   ts_unverifiedWarning: "Непроверенные темы могут содержать неподходящий контент",
   ts_noThemes: "Темы не найдены. Импортируйте или создайте тему.",
   ts_importTitle: "Импорт темы",
-  ts_importPlaceholder: `Вставьте JSON темы сюда...\n\nПример формата:\n{\n  "name": "Моя тема",\n  "language": "ru",\n  "description": {\n    "teams": ["Команда 1", ...],\n    "words": { "слово": 1, ... }\n  }\n}`,
+  ts_importPlaceholder: `Вставьте JSON темы сюда...\n\nПример формата:\n{\n  "name": "Моя тема",\n  "language": "ru",\n  "description": {\n    "teams": ["Команда 1", ...],\n    "words": { "слово": { "difficulty": 1 }, ... }\n  }\n}`,
   ts_public: "Публичная",
   ts_importBtn: "Импортировать",
   ts_cancel: "Отмена",
@@ -616,6 +619,8 @@ export const ru: Translations = {
   ct_teamsError: "Необходимо указать ровно 10 названий команд.",
   ct_wordsLabel: "Слова * (минимум 30 слов сложности 1, макс. 64 символа, макс. 10 слов)",
   ct_importFromText: "Импорт из текста (одно слово в строке)",
+  ct_importPrompt:
+    'Вставьте одно слово в строке или JSON вида {"hello": {"difficulty": 1}, "world": {"difficulty": 3}}:',
   ct_wordPlaceholder: (i) => `Слово ${i}`,
   ct_difficulty: "Сложность",
   ct_setDifficulty: (level) => `Установить сложность ${level}`,

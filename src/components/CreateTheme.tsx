@@ -135,7 +135,17 @@ export default function CreateTheme({ user: _user, onBack, onThemeCreated }: Cre
   };
 
   const importWords = (text: string) => {
-    const imported = text.split("\n").map((line) => line.trim()).filter((line) => line.length > 0).map((line) => ({ text: line, difficulty: 1 }));
+    let imported: { text: string; difficulty: number }[];
+    try {
+      const parsed = JSON.parse(text);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("not an object");
+      imported = Object.entries(parsed).map(([word, value]) => {
+        const difficulty = Number((value as { difficulty?: unknown })?.difficulty);
+        return { text: word, difficulty: Number.isFinite(difficulty) ? difficulty : 1 };
+      });
+    } catch {
+      imported = text.split("\n").map((line) => line.trim()).filter((line) => line.length > 0).map((line) => ({ text: line, difficulty: 1 }));
+    }
     setWords([...words.filter((w) => w.text.trim()), ...imported]);
   };
 
@@ -236,7 +246,7 @@ export default function CreateTheme({ user: _user, onBack, onThemeCreated }: Cre
             <button
               type="button"
               onClick={() => {
-                const text = prompt(t.ct_importFromText);
+                const text = prompt(t.ct_importPrompt);
                 if (text) importWords(text);
               }}
               className="rounded-game border border-text/15 bg-text/[0.06] px-4 py-2 text-sm font-semibold text-text transition hover:bg-text/10"
