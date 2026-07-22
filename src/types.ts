@@ -23,7 +23,8 @@ export interface Theme {
   likes_count?: number;
   is_favorited?: boolean;
   creator?: {
-    email: string;
+    email: string | null;
+    username?: string | null;
     picture?: string;
     admin?: boolean;
   };
@@ -37,7 +38,8 @@ export interface ThemeListItem {
   verified: boolean;
   likes_count?: number;
   creator?: {
-    email: string;
+    email: string | null;
+    username?: string | null;
     picture?: string;
     admin?: boolean;
   };

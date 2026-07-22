@@ -10,18 +10,32 @@ interface GameHistoryProps {
   onViewGameDetails?: (gameId: number) => void;
 }
 
-export default function GameHistory({ onBack, onResumeGame, onViewGameDetails }: GameHistoryProps) {
+export default function GameHistory({
+  onBack,
+  onResumeGame,
+  onViewGameDetails,
+}: GameHistoryProps) {
   const { t } = useLocale();
   const [games, setGames] = useState<GameListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedGame, setSelectedGame] = useState<GameDetailsResponse | null>(null);
+  const [selectedGame, setSelectedGame] = useState<GameDetailsResponse | null>(
+    null,
+  );
 
   useEffect(() => {
     const fetchGames = async () => {
       setIsLoading(true);
       try {
-        const response = await getGames(1, 50, undefined, undefined, undefined, "id", true);
+        const response = await getGames(
+          1,
+          50,
+          undefined,
+          undefined,
+          undefined,
+          "id",
+          true,
+        );
         setGames(response.items);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load games");
@@ -32,7 +46,8 @@ export default function GameHistory({ onBack, onResumeGame, onViewGameDetails }:
     fetchGames();
   }, []);
 
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleString();
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleString();
 
   const handleViewDetails = async (game: GameListItem) => {
     if (onViewGameDetails) {
@@ -42,7 +57,11 @@ export default function GameHistory({ onBack, onResumeGame, onViewGameDetails }:
         const gameDetails = await getGame(game.id);
         setSelectedGame(gameDetails);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load game details");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load the game details",
+        );
       }
     }
   };
@@ -65,7 +84,9 @@ export default function GameHistory({ onBack, onResumeGame, onViewGameDetails }:
         },
         currentTeamIndex: game.info.current_team_index || 0,
         currentRound: game.info.current_round || game.round,
-        teamScores: Object.fromEntries(game.info.teams.map((team) => [team.name, team.score])),
+        teamScores: Object.fromEntries(
+          game.info.teams.map((team) => [team.name, team.score]),
+        ),
         wordsUsed: [...game.words_guessed, ...game.words_skipped],
         currentWordIndex: game.words_guessed.length + game.words_skipped.length,
         roundStartTime: null,
@@ -79,7 +100,9 @@ export default function GameHistory({ onBack, onResumeGame, onViewGameDetails }:
       };
       onResumeGame(gameState, game.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load theme data");
+      setError(
+        err instanceof Error ? err.message : "Failed to load theme data",
+      );
     }
   };
 
@@ -98,26 +121,35 @@ export default function GameHistory({ onBack, onResumeGame, onViewGameDetails }:
 
         <div className="space-y-6">
           <div>
-            <h1 className="mb-2 text-3xl font-bold text-text">{t.gh_gameDetails}</h1>
+            <h1 className="mb-2 text-3xl font-bold text-text">
+              {t.gh_gameDetails}
+            </h1>
             <div className="flex flex-wrap items-center gap-4 text-text/80">
               <span>{t.gh_theme(selectedGame.theme.name)}</span>
-              <span>{t.gh_language(selectedGame.theme.language.toUpperCase())}</span>
+              <span>
+                {t.gh_language(selectedGame.theme.language.toUpperCase())}
+              </span>
               <span>{t.gh_pointsRequired(selectedGame.points)}</span>
               <span>{t.gh_skipPenalty(selectedGame.skip_penalty)}</span>
             </div>
             <div className="mt-2 text-text/60">
               {t.gh_started(formatDate(selectedGame.started_at))}
               {selectedGame.ended_at && (
-                <span className="ml-4">{t.gh_ended(formatDate(selectedGame.ended_at))}</span>
+                <span className="ml-4">
+                  {t.gh_ended(formatDate(selectedGame.ended_at))}
+                </span>
               )}
             </div>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <h2 className="mb-4 text-xl font-semibold text-text">{t.gh_teams}</h2>
+              <h2 className="mb-4 text-xl font-semibold text-text">
+                {t.gh_teams}
+              </h2>
               <div className="rounded-game border border-text/10 bg-text/[0.04] p-4">
-                {selectedGame.info?.teams && selectedGame.info.teams.length > 0 ? (
+                {selectedGame.info?.teams &&
+                selectedGame.info.teams.length > 0 ? (
                   selectedGame.info.teams.map((team, index) => (
                     <div key={index} className="mb-2 text-text/80">
                       {t.gh_teamScore(team.name, team.score)}
@@ -130,16 +162,23 @@ export default function GameHistory({ onBack, onResumeGame, onViewGameDetails }:
             </div>
 
             <div>
-              <h2 className="mb-4 text-xl font-semibold text-text">{t.gh_gameStatus}</h2>
+              <h2 className="mb-4 text-xl font-semibold text-text">
+                {t.gh_gameStatus}
+              </h2>
               <div className="rounded-game border border-text/10 bg-text/[0.04] p-4">
                 <div className="mb-2 text-text/80">
-                  {t.gh_currentRound(selectedGame.info?.current_round || selectedGame.round)}
+                  {t.gh_currentRound(
+                    selectedGame.info?.current_round || selectedGame.round,
+                  )}
                 </div>
                 <div className="mb-2 text-text/80">
                   {t.gh_currentTeam(
-                    selectedGame.info?.teams && selectedGame.info.current_team_index !== undefined
-                      ? selectedGame.info.teams[selectedGame.info.current_team_index]?.name || "Unknown"
-                      : "Unknown"
+                    selectedGame.info?.teams &&
+                      selectedGame.info.current_team_index !== undefined
+                      ? selectedGame.info.teams[
+                          selectedGame.info.current_team_index
+                        ]?.name || "Unknown"
+                      : "Unknown",
                   )}
                 </div>
                 <div className="mb-2 text-text/80">
@@ -213,27 +252,42 @@ export default function GameHistory({ onBack, onResumeGame, onViewGameDetails }:
               className="cursor-pointer rounded-game border border-text/10 bg-text/[0.04] p-4 transition hover:border-success/40 hover:bg-text/[0.07]"
               onClick={() => handleViewDetails(game)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleViewDetails(game); }
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleViewDetails(game);
+                }
               }}
             >
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                 <div>
-                  <h3 className="mb-2 font-semibold text-text">{game.theme.name}</h3>
+                  <h3 className="mb-2 font-semibold text-text">
+                    {game.theme.name}
+                  </h3>
                   <div className="mb-2 text-sm text-text/60">
                     {t.gh_language(game.theme.language.toUpperCase())}
                   </div>
                   <div className="text-sm text-text/60">
                     {t.gh_started(formatDate(game.started_at))}
                     {game.ended_at && (
-                      <span className="ml-4">{t.gh_ended(formatDate(game.ended_at))}</span>
+                      <span className="ml-4">
+                        {t.gh_ended(formatDate(game.ended_at))}
+                      </span>
                     )}
                   </div>
                 </div>
                 <div className="text-left sm:text-right">
-                  <div className="text-sm text-text/80">{t.gh_pointsRequired(game.points)}</div>
-                  <div className="text-sm text-text/80">{t.gh_roundTime(game.round)}</div>
-                  <div className="text-sm text-text/80">{t.gh_skipPenalty(game.skip_penalty)}</div>
-                  <div className={`text-sm ${game.ended_at ? "text-success" : "text-error"}`}>
+                  <div className="text-sm text-text/80">
+                    {t.gh_pointsRequired(game.points)}
+                  </div>
+                  <div className="text-sm text-text/80">
+                    {t.gh_roundTime(game.round)}
+                  </div>
+                  <div className="text-sm text-text/80">
+                    {t.gh_skipPenalty(game.skip_penalty)}
+                  </div>
+                  <div
+                    className={`text-sm ${game.ended_at ? "text-success" : "text-error"}`}
+                  >
                     {game.ended_at ? t.gh_completed : t.gh_inProgress}
                   </div>
                 </div>

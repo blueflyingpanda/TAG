@@ -159,7 +159,9 @@ export default function ThemeDetails({
             <span>{t.td_visibility(theme.public)}</span>
           </div>
           {theme.creator && (
-            <div className="mt-2 text-text/60">{t.td_createdBy(theme.creator.email)}</div>
+            <div className="mt-2 text-text/60">
+              {t.td_createdBy(theme.creator.email ?? theme.creator.username ?? '')}
+            </div>
           )}
         </div>
 
