@@ -6,6 +6,12 @@ export interface Translations {
   nav_logout: string;
   nav_toggleDark: string;
   nav_profileAlt: string;
+  nav_privacyPolicy: string;
+  nav_deleteAccount: string;
+  nav_deleteAccountTitle: string;
+  nav_deleteAccountBody: string;
+  nav_deleteAccountConfirm: string;
+  nav_deleteAccountFailed: string;
 
   // Login
   login_subtitle: string;
@@ -58,6 +64,7 @@ export interface Translations {
   td_failedFavorite: string;
   td_share: string;
   td_copied: string;
+  td_report: string;
 
   // GameSetup
   gs_selectTeams: string;
@@ -252,6 +259,12 @@ export const en: Translations = {
   nav_logout: "Logout",
   nav_toggleDark: "Toggle dark mode",
   nav_profileAlt: "Profile",
+  nav_privacyPolicy: "Privacy policy",
+  nav_deleteAccount: "Delete account",
+  nav_deleteAccountTitle: "Delete your account?",
+  nav_deleteAccountBody: "This permanently deletes your account, game history, favourites and private themes. Public themes you created stay available without your name. This can't be undone.",
+  nav_deleteAccountConfirm: "Delete permanently",
+  nav_deleteAccountFailed: "Failed to delete account. Please try again.",
 
   login_subtitle: "Themed Alias Game",
   login_loading: "Loading...",
@@ -301,6 +314,7 @@ export const en: Translations = {
   td_failedFavorite: "Failed to update favorite status",
   td_share: "Share",
   td_copied: "Copied!",
+  td_report: "Report",
 
   gs_selectTeams: "Select Teams",
   gs_selectedTeams: (s, t) => `Selected: ${s} / ${t}`,
@@ -488,6 +502,12 @@ export const ru: Translations = {
   nav_logout: "Выйти",
   nav_toggleDark: "Сменить тему",
   nav_profileAlt: "Профиль",
+  nav_privacyPolicy: "Политика конфиденциальности",
+  nav_deleteAccount: "Удалить аккаунт",
+  nav_deleteAccountTitle: "Удалить аккаунт?",
+  nav_deleteAccountBody: "Аккаунт, история игр, избранное и приватные темы будут удалены навсегда. Созданные вами публичные темы останутся доступны без указания автора. Это действие нельзя отменить.",
+  nav_deleteAccountConfirm: "Удалить навсегда",
+  nav_deleteAccountFailed: "Не удалось удалить аккаунт. Попробуйте ещё раз.",
 
   login_subtitle: "Тематическая игра Alias",
   login_loading: "Загрузка...",
@@ -537,6 +557,7 @@ export const ru: Translations = {
   td_failedFavorite: "Не удалось обновить статус",
   td_share: "Поделиться",
   td_copied: "Скопировано!",
+  td_report: "Пожаловаться",
 
   gs_selectTeams: "Выбор команд",
   gs_selectedTeams: (s, total) => `Выбрано: ${s} / ${total}`,

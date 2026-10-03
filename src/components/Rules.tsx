@@ -13,7 +13,8 @@ export default function Rules() {
         <div className="rounded-game bg-text/[0.06] p-6">
           <h2 className="mb-4 text-2xl font-semibold text-success">{t.rules_basicGameplay}</h2>
           <p className="mb-3 text-text/80">
-            <strong>Alias</strong> {t.rules_intro}
+            {/* rules_intro already starts with "Alias" — bold it instead of repeating it */}
+            <strong>Alias</strong>{t.rules_intro.replace(/^Alias/, "")}
           </p>
           <ul className="list-inside list-disc space-y-2 text-text/80">
             <li>{t.rules_rule1}</li>

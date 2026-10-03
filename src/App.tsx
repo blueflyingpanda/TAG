@@ -18,6 +18,7 @@ import { createGame, updateGame } from "./utils/games";
 import {
   clearOAuthCallback,
   clearStoredToken,
+  deleteAccount,
   exchangeOAuthCode,
   exchangeTelegramInitData,
   getCurrentUser,
@@ -83,6 +84,9 @@ function App() {
     return initialUser ? storage.getGameState() : null;
   });
   const [roundLastWord, setRoundLastWord] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [, setGameId] = useState<string | null>(() => {
     // Generate or restore game ID
     const saved = localStorage.getItem("tag_current_game_id");
@@ -284,6 +288,20 @@ function App() {
     setUser(null);
     setGameState(null);
     setScreen("login");
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount();
+      setShowDeleteDialog(false);
+      handleLogout();
+    } catch {
+      setDeleteError(t.nav_deleteAccountFailed);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   useEffect(() => {
@@ -629,6 +647,55 @@ function App() {
                 </button>
               </div>
             )}
+
+            {!hideHeaderButtons && (
+              <div className="mt-2 flex items-center justify-center gap-2 text-xs text-text/60">
+                <a href="/TAG/privacy.html" target="_blank" rel="noopener" className="hover:underline">
+                  {t.nav_privacyPolicy}
+                </a>
+                <span aria-hidden>•</span>
+                <button
+                  type="button"
+                  onClick={() => { setDeleteError(null); setShowDeleteDialog(true); }}
+                  className="text-error hover:underline"
+                >
+                  {t.nav_deleteAccount}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {showDeleteDialog && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-account-title"
+          >
+            <div className="w-full max-w-md rounded-game border border-text/15 bg-card p-6 text-text shadow-lg">
+              <h2 id="delete-account-title" className="mb-3 text-xl font-bold">{t.nav_deleteAccountTitle}</h2>
+              <p className="mb-4 text-sm text-text/80">{t.nav_deleteAccountBody}</p>
+              {deleteError && <p className="mb-3 text-sm text-error">{deleteError}</p>}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteDialog(false)}
+                  disabled={isDeleting}
+                  className="flex-1 rounded-game border border-text/15 bg-text/[0.06] px-4 py-2 font-semibold transition hover:bg-text/10 disabled:opacity-50"
+                >
+                  {t.ct_cancel}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteAccount}
+                  disabled={isDeleting}
+                  className="flex-1 rounded-game bg-error px-4 py-2 font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                >
+                  {isDeleting ? t.login_loading : t.nav_deleteAccountConfirm}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

@@ -8,7 +8,7 @@
  */
 
 import type { User } from '../types';
-import { AUTH_ENDPOINTS } from './config';
+import { API_BASE, AUTH_ENDPOINTS } from './config';
 
 const TOKEN_STORAGE_KEY = 'auth_token';
 
@@ -179,6 +179,18 @@ export async function authenticatedFetch(url: string, options: RequestInit = {})
   }
 
   return response;
+}
+
+/**
+ * Permanently delete the signed-in account (DELETE /auth/me).
+ * Public themes stay available without an author; everything else is removed.
+ */
+export async function deleteAccount(): Promise<void> {
+  const response = await authenticatedFetch(`${API_BASE}/auth/me`, { method: 'DELETE' });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete account: ${response.statusText}`);
+  }
 }
 
 /**
