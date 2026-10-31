@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocale } from "../contexts/LocaleContext";
 import type { Theme, User } from "../types";
-import { getTheme, patchThemeVisibility, updateTheme } from "../utils/themes";
+import { deleteCoverImage, getTheme, patchThemeVisibility, updateTheme, uploadCoverImage } from "../utils/themes";
+import CoverImageField from "./CoverImageField";
 
 interface EditThemeProps {
   user: User;
@@ -15,8 +16,11 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
   const [theme, setTheme] = useState<Theme | null>(null);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
+  const [summary, setSummary] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [newWords, setNewWords] = useState<{ text: string; difficulty: number }[]>([{ text: "", difficulty: 1 }]);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverRemoved, setCoverRemoved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
   const [error, setError] = useState("");
@@ -30,6 +34,7 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
         if (cancelled) return;
         setTheme(data);
         setName(data.name);
+        setSummary(data.summary ?? "");
         setIsPublic(data.public);
       } catch {
         if (!cancelled) setError(t.et_errFailed);
@@ -112,10 +117,20 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
         ...theme.description.words,
         ...Object.fromEntries(validNew.map((w) => [w.text.trim(), { difficulty: w.difficulty }])),
       };
-      const updated = await updateTheme(theme.id, {
+      let updated = await updateTheme(theme.id, {
         name: name.trim(),
+        summary: summary.trim(),
         description: { words: mergedWords, teams: theme.description.teams },
       });
+      try {
+        if (coverFile) updated = await uploadCoverImage(theme.id, coverFile);
+        else if (coverRemoved) {
+          await deleteCoverImage(theme.id);
+          updated = { ...updated, cover_image_url: null };
+        }
+      } catch {
+        window.alert(t.ct_coverUploadFailed);
+      }
       onSaved(updated);
     } catch (err) {
       setError(
@@ -157,7 +172,7 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
   const existingWordList = Object.keys(theme.description.words);
 
   return (
-    <div className="mx-auto max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-game bg-card p-6 shadow-sm md:p-8">
+    <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-6 shadow-sm md:p-8">
       <h1 className="mb-6 text-center text-3xl font-bold text-text">{t.et_title}</h1>
 
       <div className="space-y-6">
@@ -175,6 +190,26 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
             {t.ct_nameCounter(name.length, name.trim().split(/\s+/).filter(Boolean).length)}
           </p>
         </div>
+
+        <div>
+          <label className="mb-2 block font-semibold text-text">{t.ct_summaryLabel}</label>
+          <input
+            type="text"
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            placeholder={t.ct_summaryPlaceholder}
+            className={inputClass}
+            maxLength={255}
+          />
+        </div>
+
+        <CoverImageField
+          currentUrl={theme.cover_image_url}
+          file={coverFile}
+          removed={coverRemoved}
+          onFileChange={setCoverFile}
+          onRemoveChange={setCoverRemoved}
+        />
 
         {/* Visibility — calls PATCH immediately on toggle */}
         <div>
@@ -197,38 +232,38 @@ export default function EditTheme({ user: _user, themeId, onBack, onSaved }: Edi
         </div>
 
         {/* Teams (read-only) */}
-        <div>
-          <label className="mb-2 block font-semibold text-text">{t.et_teamsLabel}</label>
-          <div className="grid grid-cols-2 gap-2 rounded-game border border-text/10 bg-text/[0.04] p-4 md:grid-cols-3">
+        <details className="rounded-game border border-text/10 bg-text/[0.04] p-4">
+          <summary className="cursor-pointer select-none font-semibold text-text">
+            {t.et_teamsLabel}
+          </summary>
+          <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-3">
             {theme.description.teams.map((team, i) => (
               <div key={i} className="rounded-game bg-card p-2 text-sm text-text/80">
                 {team}
               </div>
             ))}
           </div>
-        </div>
+        </details>
 
         {/* Existing words (read-only) */}
-        <div>
-          <label className="mb-2 block font-semibold text-text">
+        <details className="rounded-game border border-text/10 bg-text/[0.04] p-4">
+          <summary className="cursor-pointer select-none font-semibold text-text">
             {t.et_existingWords(existingWordList.length)}
-          </label>
-          <div className="max-h-48 overflow-y-auto rounded-game border border-text/10 bg-text/[0.04] p-4">
-            <div className="grid grid-cols-3 gap-2">
-              {existingWordList.map((word, i) => (
-                <div key={i} className="rounded-game bg-card p-2 text-sm text-text/70">
-                  {word}
-                </div>
-              ))}
-            </div>
+          </summary>
+          <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-3">
+            {existingWordList.map((word, i) => (
+              <div key={i} className="rounded-game bg-card p-2 text-sm text-text/70">
+                {word}
+              </div>
+            ))}
           </div>
-        </div>
+        </details>
 
         {/* New words to add */}
         <div>
           <label className="mb-1 block font-semibold text-text">{t.et_addWordsLabel}</label>
           <p className="mb-3 text-sm text-text/60">{t.et_addWordsHint}</p>
-          <div className="max-h-64 space-y-2 overflow-y-auto">
+          <div className="space-y-2">
             {newWords.map((word, i) => (
               <div key={i} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input

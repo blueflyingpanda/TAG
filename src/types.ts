@@ -14,6 +14,8 @@ export interface Theme {
   id: number;
   name: string;
   language: string; // ISO 639 alpha-2
+  summary?: string;
+  cover_image_url?: string | null;
   public: boolean;
   verified: boolean;
   description: {
@@ -34,6 +36,8 @@ export interface ThemeListItem {
   id: number;
   name: string;
   language: string;
+  summary?: string;
+  cover_image_url?: string | null;
   public: boolean;
   verified: boolean;
   likes_count?: number;
@@ -47,6 +51,7 @@ export interface ThemeListItem {
 
 export interface ThemePayload {
   name: string;
+  summary?: string;
   language?: string;
   public?: boolean;
   description: {
@@ -57,6 +62,7 @@ export interface ThemePayload {
 
 export interface ThemeDescriptionPayload {
   name?: string;
+  summary?: string;
   description: {
     words: Record<string, ThemeWordMeta>;
     teams: string[];

@@ -6,14 +6,12 @@ interface GameSetupProps {
   theme: Theme;
   initialDifficulty?: number;
   onStart: (settings: GameSettings) => void;
-  onBack: () => void;
 }
 
 export default function GameSetup({
   theme,
   initialDifficulty = 3,
   onStart,
-  onBack,
 }: GameSetupProps) {
   const { t } = useLocale();
   const [selectedTeams, setSelectedTeams] = useState<string[]>([
@@ -43,13 +41,7 @@ export default function GameSetup({
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl rounded-game bg-card p-6 shadow-sm md:p-8">
-      <h1 className="mb-2 text-center text-3xl font-bold text-text">{theme.name}</h1>
-      <p className="mb-6 text-center text-text/60">
-        {Object.keys(theme.description.words).length} words •{" "}
-        {theme.description.teams.length} teams available
-      </p>
-
+    <div>
       <div className="space-y-6">
         <div>
           <label className="mb-3 block font-semibold text-text">{t.gs_selectTeams}</label>
@@ -144,19 +136,12 @@ export default function GameSetup({
           </label>
         </div>
 
-        <div className="flex gap-4 pt-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex-1 rounded-game border border-text/15 bg-text/[0.06] px-6 py-3 font-semibold text-text transition hover:bg-text/10"
-          >
-            {t.gs_back}
-          </button>
+        <div className="pt-4">
           <button
             type="button"
             onClick={handleStart}
             disabled={selectedTeams.length < 2}
-            className="flex-1 rounded-game bg-success px-6 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-game bg-success px-6 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {t.gs_startGame}
           </button>

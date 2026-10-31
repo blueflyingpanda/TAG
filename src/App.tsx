@@ -1,20 +1,25 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale } from "./contexts/LocaleContext";
 import { useTheme } from "./hooks/useTheme";
 import CreateTheme from "./components/CreateTheme";
 import EditTheme from "./components/EditTheme";
 import GameHistory from "./components/GameHistory";
 import GamePlay from "./components/GamePlay";
-import GameSetup from "./components/GameSetup";
 import Login from "./components/Login";
 import RoundResults from "./components/RoundResults";
 import Rules from "./components/Rules";
 import ThemeDetails from "./components/ThemeDetails";
 import ThemeSelection from "./components/ThemeSelection";
-import type { GameSettings, GameState, Theme, User } from "./types";
+import type { GameSettings, GameState, User } from "./types";
 import { checkWinCondition, initializeGameState } from "./utils/game";
 import { createGame, updateGame } from "./utils/games";
+import {
+  createLocalGame,
+  isLocalGameId,
+  syncLocalGames,
+  updateLocalGame,
+} from "./utils/localGames";
 import {
   clearOAuthCallback,
   clearStoredToken,
@@ -53,36 +58,78 @@ type AppScreen =
   | "theme-selection"
   | "theme-details"
   | "edit-theme"
-  | "game-setup"
   | "game-play"
   | "round-results"
   | "game-history"
   | "create-theme"
   | "rules";
 
+const GAME_SCREENS: AppScreen[] = ["game-play", "round-results"];
+
+interface HistoryState {
+  screen: AppScreen;
+  themeId?: number | null;
+  idx: number;
+}
+
+function readHistoryState(): HistoryState | null {
+  const state = window.history.state as HistoryState | null;
+  return state && typeof state.screen === "string" ? state : null;
+}
+
 function App() {
   const { theme, toggle: toggleTheme } = useTheme();
   const { t, locale, setLocale } = useLocale();
   const initialUser = storage.getUser();
   const [screen, setScreen] = useState<AppScreen>(() => {
-    if (!initialUser) return "login";
     const savedState = storage.getGameState();
     if (savedState) return "game-play";
     if (getDeepLinkThemeId()) return "theme-details";
     return "theme-selection";
   });
+  const screenRef = useRef(screen);
+  screenRef.current = screen;
+  const [loginReturnScreen, setLoginReturnScreen] =
+    useState<AppScreen>("theme-selection");
   const [user, setUser] = useState<User | null>(initialUser);
-  const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
   const [selectedThemeId, setSelectedThemeId] = useState<number | null>(
-    initialUser ? getDeepLinkThemeId() : null,
+    getDeepLinkThemeId(),
   );
-  const [themeFilters, setThemeFilters] = useState<URLSearchParams | null>(
-    null,
+  const selectedThemeIdRef = useRef(selectedThemeId);
+  selectedThemeIdRef.current = selectedThemeId;
+
+  // Every screen change goes through history so the browser back/forward buttons work.
+  // Game screens never add entries on top of each other.
+  const go = (
+    next: AppScreen,
+    opts: { themeId?: number | null; url?: string; replace?: boolean } = {},
+  ) => {
+    const current = readHistoryState();
+    const hasTheme = next === "theme-details" || next === "edit-theme";
+    const themeId = hasTheme
+      ? (opts.themeId ?? selectedThemeIdRef.current)
+      : null;
+    const replace =
+      opts.replace ||
+      (GAME_SCREENS.includes(next) && GAME_SCREENS.includes(screenRef.current));
+    const idx = current?.idx ?? 0;
+    const state: HistoryState = {
+      screen: next,
+      themeId,
+      idx: replace ? idx : idx + 1,
+    };
+    const url = opts.url ?? (hasTheme && themeId ? `/TAG/theme/${themeId}/` : "/TAG/");
+    window.history[replace ? "replaceState" : "pushState"](state, "", url);
+    setScreen(next);
+  };
+
+  const goBack = (fallback: () => void) => {
+    if ((readHistoryState()?.idx ?? 0) > 0) window.history.back();
+    else fallback();
+  };
+  const [gameState, setGameState] = useState<GameState | null>(() =>
+    storage.getGameState(),
   );
-  const [gameState, setGameState] = useState<GameState | null>(() => {
-    // Only restore game state if user is authenticated
-    return initialUser ? storage.getGameState() : null;
-  });
   const [roundLastWord, setRoundLastWord] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -103,9 +150,6 @@ function App() {
     try {
       const gameId = localStorage.getItem("tag_current_game_id");
       if (!gameId) return;
-
-      const gameIdNum = parseInt(gameId);
-      if (isNaN(gameIdNum)) return; // Skip for local games
 
       // Convert round results to words_guessed and words_skipped arrays
       const wordsGuessed: string[] = [];
@@ -132,26 +176,58 @@ function App() {
         words_skipped: wordsSkipped,
       };
 
-      await updateGame(gameIdNum, updateData);
+      if (isLocalGameId(gameId)) {
+        updateLocalGame(gameId, updateData);
+        return;
+      }
+      await updateGame(parseInt(gameId), updateData);
     } catch (error) {
       console.error("Failed to update game via API:", error);
       // Don't block gameplay if API update fails
     }
   };
 
-  // Replace ?redirect=/TAG/theme/29/ with the clean canonical URL on first load.
-  // Also persist the theme ID to sessionStorage so it survives the OAuth redirect.
   useEffect(() => {
-    const deepId = getDeepLinkThemeId();
-    if (deepId && !initialUser) {
-      sessionStorage.setItem(PENDING_THEME_KEY, String(deepId));
+    if (!readHistoryState()) {
+      window.history.replaceState(
+        { screen: screenRef.current, themeId: selectedThemeIdRef.current, idx: 0 },
+        "",
+        window.location.href,
+      );
     }
 
+    const onPopState = (e: PopStateEvent) => {
+      const state = e.state as HistoryState | null;
+      if (GAME_SCREENS.includes(screenRef.current)) {
+        // Leaving a game with the back button would strand it; stay on the game screen
+        window.history.pushState(
+          { screen: screenRef.current, themeId: null, idx: (state?.idx ?? 0) + 1 },
+          "",
+          "/TAG/",
+        );
+        return;
+      }
+      const deepId = state ? null : getDeepLinkThemeId();
+      let next: AppScreen = state?.screen ?? (deepId ? "theme-details" : "theme-selection");
+      if (GAME_SCREENS.includes(next) || (next === "edit-theme" && !state?.themeId)) {
+        next = "theme-selection";
+      }
+      const themeId = state?.themeId ?? deepId;
+      if (themeId) setSelectedThemeId(themeId);
+      setScreen(next);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  // Replace ?redirect=/TAG/theme/29/ with the clean canonical URL on first load.
+  useEffect(() => {
     const redirect = new URLSearchParams(window.location.search).get('redirect');
     if (redirect) {
       const match = redirect.match(/\/theme\/(\d+)\/?$/);
       if (match) {
-        window.history.replaceState({}, '', `/TAG/theme/${match[1]}/`);
+        window.history.replaceState(window.history.state, '', `/TAG/theme/${match[1]}/`);
       }
     }
   }, []);
@@ -173,15 +249,13 @@ function App() {
             setUser(userData);
             const pendingId = consumePendingThemeId() ?? getDeepLinkThemeId();
             if (pendingId) {
-              window.history.replaceState({}, '', `/TAG/theme/${pendingId}/`);
               setSelectedThemeId(pendingId);
-              setScreen("theme-details");
-            } else setScreen("theme-selection");
+              go("theme-details", { themeId: pendingId, replace: true });
+            } else go("theme-selection", { replace: true });
           }
           return;
         } catch (err) {
           console.error("Telegram auth failed:", err);
-          setScreen("login");
           return;
         }
       }
@@ -209,15 +283,13 @@ function App() {
           setUser(userData);
           const pendingId = consumePendingThemeId() ?? getDeepLinkThemeId();
           if (pendingId) {
-            window.history.replaceState({}, '', `/TAG/theme/${pendingId}/`);
             setSelectedThemeId(pendingId);
-            setScreen("theme-details");
-          } else setScreen("theme-selection");
+            go("theme-details", { themeId: pendingId, replace: true });
+          } else go("theme-selection", { replace: true });
         }
       } catch (err) {
         console.error("OAuth exchange failed:", err);
-        // Redirect back to login on error
-        setScreen("login");
+        go("login", { replace: true });
       }
     };
 
@@ -250,26 +322,15 @@ function App() {
   }, [hideHeaderButtons]);
 
   useEffect(() => {
-    // Enforce authentication - redirect to login if user is not logged in
-    if (!user && screen !== "login") {
-      // Schedule state update asynchronously to avoid cascading renders
-      setTimeout(() => setScreen("login"), 0);
-    }
-  }, [user, screen]);
-
-  useEffect(() => {
-    // Sync game state if it exists and user is authenticated
-    if (user) {
-      const savedState = storage.getGameState();
-      if (savedState && !gameState) {
-        // Schedule state updates asynchronously to avoid cascading renders
-        setTimeout(() => {
-          setGameState(savedState);
-          setScreen("game-play");
-        }, 0);
-      }
-    }
-  }, [gameState, user]);
+    // Upload games played as guest or offline once signed in, and retry when back online
+    if (!user) return;
+    const sync = () => {
+      void syncLocalGames();
+    };
+    sync();
+    window.addEventListener("online", sync);
+    return () => window.removeEventListener("online", sync);
+  }, [user]);
 
   useEffect(() => {
     if (gameState) {
@@ -284,10 +345,25 @@ function App() {
     storage.clearGameState();
     localStorage.removeItem("tag_current_game_id");
     sessionStorage.removeItem(PENDING_THEME_KEY);
-    window.history.pushState({}, '', '/TAG/');
     setUser(null);
     setGameState(null);
-    setScreen("login");
+    go("theme-selection", { replace: true });
+  };
+
+  const requestLogin = () => {
+    if (screen === "theme-details" && selectedThemeId) {
+      sessionStorage.setItem(PENDING_THEME_KEY, String(selectedThemeId));
+    }
+    if (screen !== "login") setLoginReturnScreen(screen);
+    go("login");
+  };
+
+  const handleLoginBack = () => {
+    if (readHistoryState()?.screen === "login" && (readHistoryState()?.idx ?? 0) > 0) {
+      window.history.back();
+    } else {
+      go(loginReturnScreen, { replace: true });
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -309,68 +385,46 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleThemeSelect = (theme: Theme) => {
-    setSelectedTheme(theme);
-    setScreen("game-setup");
-  };
-
   const handleGameStart = async (settings: GameSettings) => {
+    const gameData = {
+      theme_id: settings.theme.id,
+      difficulty: settings.difficulty,
+      started_at: new Date().toISOString(),
+      ended_at: null,
+      points: settings.pointsRequired,
+      round: settings.roundTimer,
+      skip_penalty: settings.skipPenalty,
+      info: {
+        teams: settings.selectedTeams.map((team) => ({
+          name: team,
+          score: 0,
+        })),
+        current_team_index: 0,
+        current_round: 0,
+      },
+    };
+
+    // Guests and offline players keep the game locally until they sign in
+    let gameId: string;
     try {
-      // Create game via API with correct payload structure
-      const gameData = {
-        theme_id: settings.theme.id,
-        difficulty: settings.difficulty,
-        started_at: new Date().toISOString(),
-        ended_at: null,
-        points: settings.pointsRequired,
-        round: settings.roundTimer,
-        skip_penalty: settings.skipPenalty,
-        info: {
-          teams: settings.selectedTeams.map((team) => ({
-            name: team,
-            score: 0,
-          })),
-          current_team_index: 0,
-          current_round: 0,
-        },
-      };
-
-      const createdGame = await createGame(gameData);
-
-      // Use API game ID
-      const gameId = createdGame.id.toString();
-      setGameId(gameId);
-      localStorage.setItem("tag_current_game_id", gameId);
-
-      // Ensure round timer respects minimum (15s), clamp difficulty, and coerce skipPenalty to boolean
-      const safeSettings = {
-        ...settings,
-        roundTimer: Math.max(settings.roundTimer, 15),
-        difficulty: Math.max(1, Math.min(settings.difficulty, 5)),
-        skipPenalty: !!settings.skipPenalty,
-      };
-      const newGameState = initializeGameState(safeSettings);
-      setGameState(newGameState);
-      setScreen("game-play");
+      if (!user) throw new Error("Guest game");
+      gameId = (await createGame(gameData)).id.toString();
     } catch (error) {
-      console.error("Failed to create game:", error);
-      // Fallback to local game creation if API fails
-      const newGameId = `local_game_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
-      setGameId(newGameId);
-      localStorage.setItem("tag_current_game_id", newGameId);
-
-      const safeSettings = {
-        ...settings,
-        roundTimer: Math.max(settings.roundTimer, 15),
-        difficulty: Math.max(1, Math.min(settings.difficulty, 5)),
-        skipPenalty: !!settings.skipPenalty,
-      };
-      const newGameState = initializeGameState(safeSettings);
-      setGameState(newGameState);
-      setScreen("game-play");
+      if (user) console.error("Failed to create game:", error);
+      gameId = createLocalGame(gameData);
     }
+    setGameId(gameId);
+    localStorage.setItem("tag_current_game_id", gameId);
+
+    // Ensure round timer respects minimum (15s), clamp difficulty, and coerce skipPenalty to boolean
+    const safeSettings = {
+      ...settings,
+      roundTimer: Math.max(settings.roundTimer, 15),
+      difficulty: Math.max(1, Math.min(settings.difficulty, 5)),
+      skipPenalty: !!settings.skipPenalty,
+    };
+    setGameState(initializeGameState(safeSettings));
+    go("game-play");
   };
 
   const handleRoundEnd = (results: { word: string; guessed: boolean }[], lastWord?: string) => {
@@ -401,7 +455,7 @@ function App() {
 
       setGameState(updatedState);
       updateGameViaAPI(updatedState);
-      setScreen("game-play");
+      go("game-play");
       return;
     }
 
@@ -410,7 +464,7 @@ function App() {
     // `handleRoundResultsConfirm`.
     setRoundLastWord(lastWord ?? null);
     setGameState({ ...gameState, roundResults: results });
-    setScreen("round-results");
+    go("round-results");
   };
 
   const handleRoundResultsConfirm = (
@@ -456,7 +510,7 @@ function App() {
 
       storage.clearGameState();
       setGameState(updatedState);
-      setScreen("game-play"); // Will show winner screen
+      go("game-play"); // Will show winner screen
       return;
     }
 
@@ -480,7 +534,7 @@ function App() {
     updateGameViaAPI(tempStateForAPI);
 
     setGameState(updatedState);
-    setScreen("game-play");
+    go("game-play");
   };
 
   const handleGameEnd = async () => {
@@ -488,7 +542,7 @@ function App() {
       // Mark game as ended via API
       try {
         const gameId = localStorage.getItem("tag_current_game_id");
-        if (gameId && !isNaN(parseInt(gameId))) {
+        if (gameId) {
           // Convert final team scores to the expected format
           const teams = Object.entries(gameState.teamScores).map(
             ([name, score]) => ({
@@ -509,7 +563,7 @@ function App() {
             }
           });
 
-          await updateGame(parseInt(gameId), {
+          const endData = {
             info: {
               teams,
               current_team_index: gameState.currentTeamIndex,
@@ -518,7 +572,9 @@ function App() {
             words_guessed: wordsGuessed,
             words_skipped: wordsSkipped,
             ended_at: new Date().toISOString(),
-          });
+          };
+          if (isLocalGameId(gameId)) updateLocalGame(gameId, endData);
+          else await updateGame(parseInt(gameId), endData);
         }
       } catch (error) {
         console.error("Failed to end game via API:", error);
@@ -529,8 +585,7 @@ function App() {
     localStorage.removeItem("tag_current_game_id");
     setGameState(null);
     setGameId(null);
-    setSelectedTheme(null);
-    setScreen("theme-selection");
+    go("theme-selection", { replace: true });
   };
 
   return (
@@ -544,7 +599,7 @@ function App() {
           hideHeaderButtons ? "h-full" : ""
         }`}
       >
-        {user && (
+        {screen !== "login" && (
           <div className="mb-4 text-text">
             <div className="flex items-center justify-between gap-2">
               {/* Language pill — left */}
@@ -559,21 +614,23 @@ function App() {
 
               {/* User info — center */}
               <div className="flex items-center gap-3">
-                {user.picture && (
+                {user?.picture && (
                   <img
                     src={user.picture}
                     alt={t.nav_profileAlt}
                     className="h-8 w-8 rounded-full border-2 border-text/15"
                   />
                 )}
-                <div className="text-left">
-                  <div className="text-sm font-semibold text-text">
-                    {user.username}
+                {user && (
+                  <div className="text-left">
+                    <div className="text-sm font-semibold text-text">
+                      {user.username}
+                    </div>
+                    {user.email ? (
+                      <div className="text-sm text-text/80">{user.email}</div>
+                    ) : null}
                   </div>
-                  {user.email ? (
-                    <div className="text-sm text-text/80">{user.email}</div>
-                  ) : null}
-                </div>
+                )}
               </div>
 
               {/* Dark mode toggle — right */}
@@ -598,9 +655,7 @@ function App() {
                 <button
                   type="button"
                   onClick={() => {
-                    window.history.pushState({}, '', '/TAG/');
-                    setScreen("theme-selection");
-                    setSelectedTheme(null);
+                    go("theme-selection");
                   }}
                   className={`rounded-game px-4 py-2 text-sm font-semibold transition md:text-base ${
                     screen === "theme-selection"
@@ -614,7 +669,10 @@ function App() {
 
                 <button
                   type="button"
-                  onClick={() => { window.history.pushState({}, '', '/TAG/'); setScreen("game-history"); }}
+                  onClick={() => {
+                    if (!user) return requestLogin();
+                    go("game-history");
+                  }}
                   className={`rounded-game px-4 py-2 text-sm font-semibold transition md:text-base ${
                     screen === "game-history"
                       ? "cursor-default bg-success text-white"
@@ -627,7 +685,7 @@ function App() {
 
                 <button
                   type="button"
-                  onClick={() => { window.history.pushState({}, '', '/TAG/'); setScreen("rules"); }}
+                  onClick={() => go("rules")}
                   className={`rounded-game px-4 py-2 text-sm font-semibold transition md:text-base ${
                     screen === "rules"
                       ? "cursor-default bg-success text-white"
@@ -638,13 +696,23 @@ function App() {
                   {t.nav_rules}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="rounded-game bg-error px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 md:text-base"
-                >
-                  {t.nav_logout}
-                </button>
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="rounded-game bg-error px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 md:text-base"
+                  >
+                    {t.nav_logout}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={requestLogin}
+                    className="rounded-game bg-success px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 md:text-base"
+                  >
+                    {t.nav_login}
+                  </button>
+                )}
               </div>
             )}
 
@@ -653,14 +721,18 @@ function App() {
                 <a href="/TAG/privacy.html" target="_blank" rel="noopener" className="hover:underline">
                   {t.nav_privacyPolicy}
                 </a>
-                <span aria-hidden>•</span>
-                <button
-                  type="button"
-                  onClick={() => { setDeleteError(null); setShowDeleteDialog(true); }}
-                  className="text-error hover:underline"
-                >
-                  {t.nav_deleteAccount}
-                </button>
+                {user && (
+                  <>
+                    <span aria-hidden>•</span>
+                    <button
+                      type="button"
+                      onClick={() => { setDeleteError(null); setShowDeleteDialog(true); }}
+                      className="text-error hover:underline"
+                    >
+                      {t.nav_deleteAccount}
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -708,60 +780,51 @@ function App() {
             exit={{ scale: 0.97, opacity: 0 }}
             transition={screenTransition}
           >
-            {screen === "login" && <Login />}
-            {screen === "theme-selection" && user && (
+            {screen === "login" && (
+              <Login onBack={handleLoginBack} />
+            )}
+            {screen === "theme-selection" && (
               <ThemeSelection
                 user={user}
-                onThemeSelect={handleThemeSelect}
-                onCreateTheme={() => setScreen("create-theme")}
-                onThemeDetails={(themeId, filters) => {
+                onCreateTheme={() =>
+                  user ? go("create-theme") : requestLogin()
+                }
+                onThemeDetails={(themeId) => {
                   setSelectedThemeId(themeId);
-                  setThemeFilters(filters || null);
-                  window.history.pushState({}, '', `/TAG/theme/${themeId}/`);
-                  setScreen("theme-details");
+                  go("theme-details", { themeId });
                 }}
               />
             )}
-            {screen === "theme-details" && user && selectedThemeId && (
+            {screen === "theme-details" && selectedThemeId && (
               <ThemeDetails
                 user={user}
+                onLogin={requestLogin}
+                onStart={handleGameStart}
                 themeId={selectedThemeId}
-                filters={themeFilters || undefined}
-                onBack={(filters) => {
-                  const search = filters?.toString() ? `?${filters.toString()}` : '';
-                  window.history.pushState({}, '', `/TAG/${search}`);
-                  setScreen("theme-selection");
-                }}
-                onThemeSelect={handleThemeSelect}
-                onEdit={() => setScreen("edit-theme")}
+                onBack={(filters) =>
+                  goBack(() => {
+                    const search = filters?.toString() ? `?${filters.toString()}` : "";
+                    go("theme-selection", { url: `/TAG/${search}`, replace: true });
+                  })
+                }
+                onEdit={() => go("edit-theme")}
               />
             )}
             {screen === "edit-theme" && user && selectedThemeId && (
               <EditTheme
                 user={user}
                 themeId={selectedThemeId}
-                onBack={() => setScreen("theme-details")}
-                onSaved={() => setScreen("theme-details")}
+                onBack={() => goBack(() => go("theme-details", { replace: true }))}
+                onSaved={() => goBack(() => go("theme-details", { replace: true }))}
               />
             )}
             {screen === "create-theme" && user && (
               <CreateTheme
                 user={user}
-                onBack={() => setScreen("theme-selection")}
-                onThemeCreated={(theme) => {
-                  console.log("Theme created and registered:", theme);
-                  setScreen("theme-selection");
-                }}
+                onBack={() => goBack(() => go("theme-selection", { replace: true }))}
               />
             )}
-            {screen === "game-setup" && user && selectedTheme && (
-              <GameSetup
-                theme={selectedTheme}
-                onStart={handleGameStart}
-                onBack={() => setScreen("theme-selection")}
-              />
-            )}
-            {screen === "game-play" && user && gameState && (
+            {screen === "game-play" && gameState && (
               <GamePlay
                 gameState={gameState}
                 setGameState={setGameState}
@@ -769,7 +832,7 @@ function App() {
                 onGameEnd={handleGameEnd}
               />
             )}
-            {screen === "round-results" && user && gameState && (
+            {screen === "round-results" && gameState && (
               <RoundResults
                 results={gameState.roundResults}
                 skipPenalty={Boolean(gameState.settings.skipPenalty)}
@@ -779,7 +842,7 @@ function App() {
             )}
             {screen === "game-history" && user && (
               <GameHistory
-                onBack={() => setScreen("theme-selection")}
+                onBack={() => goBack(() => go("theme-selection", { replace: true }))}
                 onResumeGame={(gameState, gameId) => {
                   setGameId(gameId.toString());
                   localStorage.setItem(
@@ -787,7 +850,7 @@ function App() {
                     gameId.toString(),
                   );
                   setGameState(gameState);
-                  setScreen("game-play");
+                  go("game-play");
                 }}
               />
             )}

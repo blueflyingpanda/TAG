@@ -214,3 +214,38 @@ export function localThemeToApi(
     },
   };
 }
+
+/**
+ * Upload (or replace) a theme's cover image. The server crops it to 16:9 and compresses it.
+ */
+export async function uploadCoverImage(themeId: number, file: File): Promise<Theme> {
+  const body = new FormData();
+  body.append('file', file);
+
+  const response = await authenticatedFetch(`${API_BASE}/themes/${themeId}/cover-image`, {
+    method: 'PUT',
+    body,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to upload cover image: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  return {
+    ...data,
+    likes_count: data.likes,
+    is_favorited: data.favourite,
+  };
+}
+
+export async function deleteCoverImage(themeId: number): Promise<void> {
+  const response = await authenticatedFetch(`${API_BASE}/themes/${themeId}/cover-image`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete cover image: ${response.statusText}`);
+  }
+}

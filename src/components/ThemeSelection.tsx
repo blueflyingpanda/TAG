@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useLocale } from "../contexts/LocaleContext";
-import type { Theme, ThemeListItem, ThemeOrderByType, User } from "../types";
+import type { ThemeListItem, ThemeOrderByType, User } from "../types";
 import { ThemeOrderBy } from "../types";
-import { createTheme, getTheme, getThemes } from "../utils/themes";
+import { createTheme, getThemes } from "../utils/themes";
 
 interface ThemeSelectionProps {
   user: User | null;
-  onThemeSelect: (theme: Theme, difficulty?: number) => void;
   onCreateTheme?: () => void;
   onThemeDetails?: (themeId: number, filters?: URLSearchParams) => void;
 }
@@ -16,8 +15,9 @@ function renderVerificationStatus(verified: boolean): string {
 }
 
 // URL parameter management
+const FILTER_PARAMS = ["search", "order", "descending", "mine", "favourites", "unverified"];
+
 function getFiltersFromURL(): {
-  selectedLang: string;
   searchTerm: string;
   orderBy: ThemeOrderByType;
   orderDescending: boolean;
@@ -28,7 +28,6 @@ function getFiltersFromURL(): {
   const urlParams = new URLSearchParams(window.location.search);
 
   return {
-    selectedLang: urlParams.get("lang") || "en",
     searchTerm: urlParams.get("search") || "",
     orderBy: (urlParams.get("order") as ThemeOrderByType) || ThemeOrderBy.ID,
     orderDescending: urlParams.get("descending") === "true",
@@ -39,7 +38,6 @@ function getFiltersFromURL(): {
 }
 
 function updateURLWithFilters(filters: {
-  selectedLang: string;
   searchTerm: string;
   orderBy: ThemeOrderByType;
   orderDescending: boolean;
@@ -49,12 +47,10 @@ function updateURLWithFilters(filters: {
 }) {
   const url = new URL(window.location.href);
 
-  // Clear existing params
-  url.search = "";
+  // Clear our own params only; others (e.g. the OAuth ?code=) belong to the app shell
+  FILTER_PARAMS.forEach((key) => url.searchParams.delete(key));
 
   // Set new params
-  if (filters.selectedLang !== "en")
-    url.searchParams.set("lang", filters.selectedLang);
   if (filters.searchTerm) url.searchParams.set("search", filters.searchTerm);
   if (filters.orderBy !== ThemeOrderBy.ID)
     url.searchParams.set("order", filters.orderBy);
@@ -64,22 +60,21 @@ function updateURLWithFilters(filters: {
   if (filters.showUnverified) url.searchParams.set("unverified", "true");
 
   // Update URL without triggering page reload
-  window.history.replaceState({}, "", url.toString());
+  window.history.replaceState(window.history.state, "", url.toString());
 }
 
 export default function ThemeSelection({
   user,
-  onThemeSelect,
   onCreateTheme,
   onThemeDetails,
 }: ThemeSelectionProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   // Initialize state from URL parameters
   const initialFilters = getFiltersFromURL();
 
   const [themes, setThemes] = useState<ThemeListItem[]>([]);
-  const [selectedLang, setSelectedLang] = useState(initialFilters.selectedLang);
+  const selectedLang = locale;
   const [onlyMyThemes, setOnlyMyThemes] = useState(initialFilters.onlyMyThemes);
   const [onlyFavorites, setOnlyFavorites] = useState(
     initialFilters.onlyFavorites,
@@ -132,7 +127,6 @@ export default function ThemeSelection({
   // Update URL when filters change
   useEffect(() => {
     updateURLWithFilters({
-      selectedLang,
       searchTerm,
       orderBy,
       orderDescending,
@@ -141,7 +135,6 @@ export default function ThemeSelection({
       showUnverified,
     });
   }, [
-    selectedLang,
     searchTerm,
     orderBy,
     orderDescending,
@@ -149,15 +142,6 @@ export default function ThemeSelection({
     onlyFavorites,
     showUnverified,
   ]);
-
-  const handleThemeSelect = async (themeItem: ThemeListItem) => {
-    try {
-      const fullTheme = await getTheme(themeItem.id);
-      onThemeSelect(fullTheme);
-    } catch (err) {
-      console.error("Failed to load theme details:", err);
-    }
-  };
 
   const handleImport = async () => {
     try {
@@ -275,18 +259,6 @@ export default function ThemeSelection({
       <div className="mb-6 space-y-4">
         {/* Row 1: Filtering */}
         <div className="flex flex-wrap gap-4 items-end justify-center">
-          <div>
-            <label className="mb-2 block text-text/80">{t.ts_language}</label>
-            <select
-              value={selectedLang}
-              onChange={(e) => setSelectedLang(e.target.value)}
-              className="rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success"
-            >
-              <option value="en">{t.ts_langEnglish}</option>
-              <option value="ru">{t.ts_langRussian}</option>
-            </select>
-          </div>
-
           <div className="w-full">
             <label className="mb-2 block text-text/80">{t.ts_search}</label>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -384,21 +356,21 @@ export default function ThemeSelection({
         <div className="flex flex-wrap gap-4 items-center justify-center">
           <button
             type="button"
-            onClick={() => setShowImportDialog(true)}
+            onClick={() =>
+              user ? setShowImportDialog(true) : onCreateTheme?.()
+            }
             className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
           >
             {t.ts_import}
           </button>
 
-          {user && (
-            <button
-              type="button"
-              onClick={() => onCreateTheme?.()}
-              className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
-            >
-              {t.ts_create}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => onCreateTheme?.()}
+            className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
+          >
+            {t.ts_create}
+          </button>
         </div>
       </div>
 
@@ -415,7 +387,6 @@ export default function ThemeSelection({
             onClick={() => {
               if (onThemeDetails) {
                 const filters = new URLSearchParams();
-                if (selectedLang !== "en") filters.set("lang", selectedLang);
                 if (searchTerm) filters.set("search", searchTerm);
                 if (orderBy !== ThemeOrderBy.ID) filters.set("order", orderBy);
                 if (orderDescending) filters.set("descending", "true");
@@ -423,16 +394,33 @@ export default function ThemeSelection({
                 if (onlyFavorites) filters.set("favourites", "true");
                 if (showUnverified) filters.set("unverified", "true");
                 onThemeDetails(theme.id, filters);
-              } else {
-                handleThemeSelect(theme);
               }
             }}
             type="button"
-            className="rounded-game border border-text/10 bg-text/[0.04] p-4 text-left transition hover:border-success/40 hover:bg-text/[0.08]"
+            className="flex flex-col overflow-hidden rounded-game border border-text/10 bg-text/[0.04] text-left transition hover:border-success/40 hover:bg-text/[0.08]"
           >
-            <h3 className="font-semibold text-text">
-              {renderVerificationStatus(theme.verified)} {theme.name}
-            </h3>
+            <div className="aspect-video w-full bg-text/[0.06]">
+              {theme.cover_image_url ? (
+                <img
+                  src={theme.cover_image_url}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-4xl text-text/25">
+                  🖼️
+                </div>
+              )}
+            </div>
+            <div className="p-4">
+              <h3 className="line-clamp-2 h-12 font-semibold text-text">
+                {renderVerificationStatus(theme.verified)} {theme.name}
+              </h3>
+              <p className="mt-1 line-clamp-2 h-10 text-sm text-text/70">
+                {theme.summary}
+              </p>
+            </div>
           </button>
         ))}
       </div>

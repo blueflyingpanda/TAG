@@ -17,6 +17,9 @@ export interface Translations {
   login_subtitle: string;
   login_loading: string;
   login_google: string;
+  login_guest: string;
+  login_required: string;
+  nav_login: string;
 
   // ThemeSelection
   ts_title: string;
@@ -174,6 +177,17 @@ export interface Translations {
   ct_errWordTooManyWords: (word: string) => string;
   ct_errWordDifficulty: (word: string) => string;
   ct_errFailed: string;
+  ct_summaryLabel: string;
+  ct_summaryPlaceholder: string;
+  ct_coverImage: string;
+  ct_coverAdd: string;
+  ct_coverChange: string;
+  ct_coverRemove: string;
+  ct_coverTooLarge: string;
+  ct_coverInvalid: string;
+  ct_coverUploadFailed: string;
+  ct_coverCropTitle: string;
+  ct_coverCropConfirm: string;
 
   // EditTheme
   et_title: string;
@@ -269,6 +283,9 @@ export const en: Translations = {
   login_subtitle: "Themed Alias Game",
   login_loading: "Loading...",
   login_google: "Continue with Google",
+  login_guest: "Continue as guest",
+  login_required: "Sign in to favourite themes, create themes and browse your game history. Guest progress is saved on this device and synced after you sign in.",
+  nav_login: "Sign in",
 
   ts_title: "Select Theme",
   ts_language: "Language",
@@ -420,6 +437,17 @@ export const en: Translations = {
   ct_errWordTooManyWords: (word) => `Word "${word}" must be 10 words or less`,
   ct_errWordDifficulty: (word) => `Word "${word}" must have a difficulty between 1 and 5`,
   ct_errFailed: "Failed to create theme",
+  ct_summaryLabel: "Summary (optional)",
+  ct_summaryPlaceholder: "A short description of the theme",
+  ct_coverImage: "Cover image",
+  ct_coverAdd: "Add cover image",
+  ct_coverChange: "Change cover image",
+  ct_coverRemove: "Remove cover image",
+  ct_coverTooLarge: "Image is too large (max 5 MB)",
+  ct_coverInvalid: "Not a valid image",
+  ct_coverUploadFailed: "Cover upload failed",
+  ct_coverCropTitle: "Frame the cover",
+  ct_coverCropConfirm: "Use this crop",
 
   et_title: "Edit Theme",
   et_edit: "Edit",
@@ -512,6 +540,9 @@ export const ru: Translations = {
   login_subtitle: "Тематическая игра Alias",
   login_loading: "Загрузка...",
   login_google: "Войти через Google",
+  login_guest: "Продолжить как гость",
+  login_required: "Войдите, чтобы добавлять темы в избранное, создавать темы и смотреть историю игр. Прогресс гостя хранится на устройстве и синхронизируется после входа.",
+  nav_login: "Войти",
 
   ts_title: "Выбор темы",
   ts_language: "Язык",
@@ -663,6 +694,17 @@ export const ru: Translations = {
   ct_errWordTooManyWords: (word) => `Слово "${word}" не более 10 слов`,
   ct_errWordDifficulty: (word) => `Слово "${word}" должно иметь сложность от 1 до 5`,
   ct_errFailed: "Не удалось создать тему",
+  ct_summaryLabel: "Краткое описание (необязательно)",
+  ct_summaryPlaceholder: "Коротко о теме",
+  ct_coverImage: "Обложка",
+  ct_coverAdd: "Добавить обложку",
+  ct_coverChange: "Изменить обложку",
+  ct_coverRemove: "Удалить обложку",
+  ct_coverTooLarge: "Изображение слишком большое (макс. 5 МБ)",
+  ct_coverInvalid: "Недопустимое изображение",
+  ct_coverUploadFailed: "Не удалось загрузить обложку",
+  ct_coverCropTitle: "Рамка обложки",
+  ct_coverCropConfirm: "Использовать",
 
   et_title: "Редактировать тему",
   et_edit: "Редактировать",

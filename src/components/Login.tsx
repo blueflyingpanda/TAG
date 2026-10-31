@@ -1,9 +1,15 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useLocale } from "../contexts/LocaleContext";
 import { Modal } from "../ui/Modal";
 import { AUTH_ENDPOINTS } from "../utils/config";
 
-export default function Login() {
+interface LoginProps {
+  onBack: () => void;
+}
+
+export default function Login({ onBack }: LoginProps) {
+  const { t } = useLocale();
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -26,7 +32,8 @@ export default function Login() {
     <Modal className="max-w-md">
       <div className="flex flex-col items-center text-text">
         <h1 className="mb-2 text-center text-3xl font-bold">T.A.G.</h1>
-        <p className="mb-8 text-center text-text/70">Themed Alias Game</p>
+        <p className="mb-4 text-center text-text/70">{t.login_subtitle}</p>
+        <p className="mb-8 text-center text-sm text-text/70">{t.login_required}</p>
 
         <motion.button
           type="button"
@@ -37,7 +44,7 @@ export default function Login() {
           className="flex w-full items-center justify-center gap-3 rounded-game border border-text/10 bg-white px-6 py-4 font-semibold text-[#222] shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? (
-            "Loading..."
+            t.login_loading
           ) : (
             <>
               <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -58,10 +65,18 @@ export default function Login() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Continue with Google
+              {t.login_google}
             </>
           )}
         </motion.button>
+
+        <button
+          type="button"
+          onClick={onBack}
+          className="mt-4 w-full rounded-game border border-text/15 bg-text/[0.06] px-6 py-3 font-semibold transition hover:bg-text/10"
+        >
+          {t.login_guest}
+        </button>
       </div>
     </Modal>
   );

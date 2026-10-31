@@ -96,9 +96,11 @@ export function getStoredToken(): string | null {
  */
 function decodeJWT(token: string): JWTPayload | null {
   try {
-    const payload = token.split('.')[1];
-    const decoded = JSON.parse(atob(payload)) as JWTPayload;
-    return decoded;
+    // JWT payloads are base64url (no padding) and UTF-8; atob alone breaks on '-', '_' and non-ASCII
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const binary = atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '='));
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes)) as JWTPayload;
   } catch (err) {
     console.error('Failed to decode JWT:', err);
     return null;
@@ -174,7 +176,7 @@ export async function authenticatedFetch(url: string, options: RequestInit = {})
     headers,
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 && authHeader.Authorization) {
     unauthorizedHandler?.();
   }
 

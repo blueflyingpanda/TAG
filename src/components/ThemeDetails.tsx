@@ -1,22 +1,25 @@
 import { useEffect, useState } from "react";
 import { useLocale } from "../contexts/LocaleContext";
-import type { Theme, User } from "../types";
+import type { GameSettings, Theme, User } from "../types";
+import GameSetup from "./GameSetup";
 import { addThemeToFavorites, getTheme, removeThemeFromFavorites } from "../utils/themes";
 
 interface ThemeDetailsProps {
-  user: User;
+  user: User | null;
+  onLogin?: () => void;
   themeId: number;
   onBack: (filters?: URLSearchParams) => void;
-  onThemeSelect?: (theme: Theme) => void;
+  onStart: (settings: GameSettings) => void;
   onEdit?: () => void;
   filters?: URLSearchParams;
 }
 
 export default function ThemeDetails({
   user,
+  onLogin,
   themeId,
   onBack,
-  onThemeSelect,
+  onStart,
   onEdit,
   filters,
 }: ThemeDetailsProps) {
@@ -99,10 +102,9 @@ export default function ThemeDetails({
         </button>
 
         <div className="flex flex-wrap items-center gap-2 md:gap-4">
-          {user && (
-            <button
+          <button
               type="button"
-              onClick={handleToggleFavorite}
+              onClick={user ? handleToggleFavorite : onLogin}
               disabled={isTogglingFavorite}
               className={`flex items-center gap-2 rounded-game px-4 py-2 font-semibold transition ${
                 theme.is_favorited
@@ -112,7 +114,6 @@ export default function ThemeDetails({
             >
               {theme.is_favorited ? "❤️" : "🤍"} {theme.likes_count || 0}
             </button>
-          )}
 
           <button
             type="button"
@@ -128,7 +129,7 @@ export default function ThemeDetails({
             {copied ? t.td_copied : t.td_share}
           </button>
 
-          {onEdit && (user.admin || user.email === theme.creator?.email) && (
+          {onEdit && user && (user.admin || user.email === theme.creator?.email) && (
             <button
               type="button"
               onClick={onEdit}
@@ -138,21 +139,18 @@ export default function ThemeDetails({
             </button>
           )}
 
-          {onThemeSelect && (
-            <button
-              type="button"
-              onClick={() => onThemeSelect(theme)}
-              className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
-            >
-              {t.td_select}
-            </button>
-          )}
         </div>
       </div>
 
       <div className="space-y-6">
+        {theme.cover_image_url && (
+          <div className="aspect-video w-full max-w-xl overflow-hidden rounded-game border border-text/10">
+            <img src={theme.cover_image_url} alt="" className="h-full w-full object-cover" />
+          </div>
+        )}
         <div>
           <h1 className="mb-2 text-3xl font-bold text-text">{theme.name}</h1>
+          {theme.summary && <p className="mb-2 text-text/80">{theme.summary}</p>}
           <div className="flex flex-wrap items-center gap-4 text-text/80">
             <span>{t.td_language(theme.language.toUpperCase())}</span>
             <span>{theme.verified ? t.td_verified : t.td_unverified}</span>
@@ -165,42 +163,27 @@ export default function ThemeDetails({
           )}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <div>
-            <h2 className="mb-4 text-xl font-semibold text-text">
-              {t.td_teams(theme.description.teams.length)}
-            </h2>
-            <div className="max-h-64 overflow-y-auto rounded-game border border-text/10 bg-text/[0.04] p-4">
-              <div className="grid grid-cols-2 gap-2">
-                {theme.description.teams.map((team, index) => (
-                  <div key={index} className="rounded-game bg-card p-2 text-sm text-text/80">
-                    {team}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        <GameSetup theme={theme} onStart={onStart} />
 
-          <div>
-            <h2 className="mb-4 text-xl font-semibold text-text">
-              {t.td_words(wordList.length)}
-            </h2>
-            <div className="max-h-64 overflow-y-auto rounded-game border border-text/10 bg-text/[0.04] p-4">
-              <div className="grid grid-cols-3 gap-2">
-                {wordList.slice(0, 50).map((word, index) => (
-                  <div key={index} className="rounded-game bg-card p-2 text-sm text-text/80">
-                    {word}
-                  </div>
-                ))}
-                {wordList.length > 50 && (
-                  <div className="col-span-3 p-2 text-center text-sm text-text/60">
-                    {t.td_moreWords(wordList.length - 50)}
-                  </div>
-                )}
-              </div>
+        <details className="group rounded-game border border-text/10 bg-text/[0.04] p-4">
+          <summary className="cursor-pointer select-none text-lg font-semibold text-text">
+            {t.td_words(wordList.length)}
+          </summary>
+          <div className="mt-4 max-h-64 overflow-y-auto">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+              {wordList.slice(0, 50).map((word, index) => (
+                <div key={index} className="rounded-game bg-card p-2 text-sm text-text/80">
+                  {word}
+                </div>
+              ))}
+              {wordList.length > 50 && (
+                <div className="col-span-full p-2 text-center text-sm text-text/60">
+                  {t.td_moreWords(wordList.length - 50)}
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        </details>
       </div>
     </div>
   );

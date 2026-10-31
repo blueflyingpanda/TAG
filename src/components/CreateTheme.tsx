@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useLocale } from "../contexts/LocaleContext";
 import type { Theme, User } from "../types";
-import { createTheme } from "../utils/themes";
+import { createTheme, uploadCoverImage } from "../utils/themes";
+import CoverImageField from "./CoverImageField";
 
 interface CreateThemeProps {
   user: User;
@@ -13,9 +14,11 @@ export default function CreateTheme({ user: _user, onBack, onThemeCreated }: Cre
   const { t } = useLocale();
   const [lang, setLang] = useState("en");
   const [name, setName] = useState("");
+  const [summary, setSummary] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [teams, setTeams] = useState<string[]>([""]);
   const [words, setWords] = useState<{ text: string; difficulty: number }[]>([{ text: "", difficulty: 1 }]);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -80,6 +83,7 @@ export default function CreateTheme({ user: _user, onBack, onThemeCreated }: Cre
     setIsSubmitting(true);
     const themePayload = {
       name: name.trim(),
+      ...(summary.trim() && { summary: summary.trim() }),
       language: lang,
       public: isPublic,
       description: {
@@ -91,7 +95,15 @@ export default function CreateTheme({ user: _user, onBack, onThemeCreated }: Cre
     };
 
     try {
-      const createdTheme = await createTheme(themePayload);
+      let createdTheme = await createTheme(themePayload);
+      if (coverFile) {
+        try {
+          createdTheme = await uploadCoverImage(createdTheme.id, coverFile);
+        } catch {
+          // Theme exists already; the cover can be added later via edit
+          window.alert(t.ct_coverUploadFailed);
+        }
+      }
       if (onThemeCreated) onThemeCreated(createdTheme);
       onBack();
     } catch (err) {
@@ -152,7 +164,7 @@ export default function CreateTheme({ user: _user, onBack, onThemeCreated }: Cre
   const inputClass = "w-full rounded-game border border-text/15 bg-card px-4 py-2 text-text shadow-sm focus:outline-none focus:ring-2 focus:ring-success";
 
   return (
-    <div className="mx-auto max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-game bg-card p-6 shadow-sm md:p-8">
+    <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-6 shadow-sm md:p-8">
       <h1 className="mb-6 text-center text-3xl font-bold text-text">{t.ct_title}</h1>
       <p className="mb-6 text-center text-sm text-text/60">{t.ct_unverifiedNote}</p>
 
@@ -197,6 +209,20 @@ export default function CreateTheme({ user: _user, onBack, onThemeCreated }: Cre
             {t.ct_nameCounter(name.length, name.trim().split(/\s+/).filter((w) => w).length)}
           </p>
         </div>
+
+        <div>
+          <label className="mb-2 block font-semibold text-text">{t.ct_summaryLabel}</label>
+          <input
+            type="text"
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            placeholder={t.ct_summaryPlaceholder}
+            className={inputClass}
+            maxLength={255}
+          />
+        </div>
+
+        <CoverImageField file={coverFile} onFileChange={setCoverFile} />
 
         <div>
           <label className="mb-2 block font-semibold text-text">{t.ct_teamsLabel}</label>
@@ -254,7 +280,7 @@ export default function CreateTheme({ user: _user, onBack, onThemeCreated }: Cre
               {t.ct_importFromText}
             </button>
           </div>
-          <div className="mb-2 max-h-64 space-y-2 overflow-y-auto">
+          <div className="mb-2 space-y-2">
             {words.map((word, index) => (
               <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
