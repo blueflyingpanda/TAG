@@ -414,9 +414,14 @@ export default function ThemeSelection({
               )}
             </div>
             <div className="p-4">
-              <h3 className="line-clamp-2 h-12 font-semibold text-text">
-                {renderVerificationStatus(theme.verified)} {theme.name}
-              </h3>
+              <div className="flex h-12 items-start justify-between gap-2">
+                <h3 className="line-clamp-2 font-semibold text-text">
+                  {renderVerificationStatus(theme.verified)} {theme.name}
+                </h3>
+                <span className="shrink-0 text-sm text-text/70">
+                  ❤️ {theme.likes_count ?? 0}
+                </span>
+              </div>
               <p className="mt-1 line-clamp-2 h-10 text-sm text-text/70">
                 {theme.summary}
               </p>
