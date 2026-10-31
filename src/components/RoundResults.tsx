@@ -9,6 +9,9 @@ interface RoundResultsProps {
     lastWordGuessed: boolean | null,
   ) => void;
   skipPenalty?: boolean;
+  teamName?: string;
+  teamColor?: string;
+  currentScore?: number;
   lastWord?: string;
 }
 
@@ -16,6 +19,9 @@ export default function RoundResults({
   results,
   onConfirm,
   skipPenalty = true,
+  teamName,
+  teamColor,
+  currentScore = 0,
   lastWord,
 }: RoundResultsProps) {
   const { t } = useLocale();
@@ -50,10 +56,18 @@ export default function RoundResults({
       initial={{ y: "100vh", opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: "100vh", opacity: 0 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30, duration: 0.6 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
     >
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="mx-auto w-full max-w-2xl rounded-game bg-card p-6 shadow-sm md:p-8">
+          {teamName && (
+            <div
+              className="mb-1 truncate text-center text-lg font-bold"
+              style={{ color: teamColor }}
+            >
+              {teamName}
+            </div>
+          )}
           <h1 className="mb-2 text-center text-3xl font-bold text-text">{t.rr_title}</h1>
           <p className="mb-6 text-center text-text/60">{t.rr_hint}</p>
           {results.length === 0 && (
@@ -65,9 +79,9 @@ export default function RoundResults({
               <motion.div
                 className="text-2xl font-bold text-success"
                 key={guessedCount}
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                initial={{ scale: 0.85, opacity: 0.5 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.12, ease: "easeOut" }}
               >
                 {guessedCount}
               </motion.div>
@@ -77,9 +91,9 @@ export default function RoundResults({
               <motion.div
                 className={`text-2xl font-bold ${earned > 0 ? "text-success" : earned < 0 ? "text-error" : "text-text/80"}`}
                 key={earned}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: pulse ? 1.2 : 1, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 15, duration: 0.3 }}
+                initial={{ scale: 0.85, opacity: 0.5 }}
+                animate={{ scale: pulse ? 1.15 : 1, opacity: 1 }}
+                transition={{ duration: 0.12, ease: "easeOut" }}
               >
                 ⭐ {earned}
               </motion.div>
@@ -89,15 +103,24 @@ export default function RoundResults({
               <motion.div
                 className="text-2xl font-bold text-error"
                 key={skippedCount}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                initial={{ scale: 0.85, opacity: 0.5 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.12, ease: "easeOut" }}
               >
                 {skippedCount}
               </motion.div>
               <div className="text-sm text-text/60">{t.rr_skipped}</div>
             </div>
           </div>
+
+          {teamName && (
+            <p className="mb-6 text-center text-sm text-text/70">
+              {t.rr_total}: {currentScore} →{" "}
+              <span className="font-bold" style={{ color: teamColor }}>
+                {currentScore + earned}
+              </span>
+            </p>
+          )}
 
           <div className="space-y-2">
             {finalResults.map((result, index) => (

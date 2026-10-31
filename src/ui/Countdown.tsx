@@ -4,6 +4,8 @@ import { cn } from "../lib/cn";
 type Props = {
   seconds: number;
   isWarning?: boolean;
+  /** Pulse the digits to build urgency */
+  isPulsing?: boolean;
   className?: string;
   suffix?: string;
 };
@@ -15,6 +17,7 @@ type Props = {
 export function Countdown({
   seconds,
   isWarning = false,
+  isPulsing = false,
   className,
   suffix = "",
 }: Props) {
@@ -31,9 +34,9 @@ export function Countdown({
           key={seconds}
           className="flex items-center justify-center"
           initial={{ opacity: 0, scale: 0.92, y: 6 }}
-          animate={{ opacity: 1, scale: 1.08, y: 0 }}
+          animate={{ opacity: 1, scale: isPulsing ? [1.08, 1.25, 1.08] : 1.08, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, y: -6 }}
-          transition={{ duration: 0.12, ease: "easeOut" }}
+          transition={{ duration: isPulsing ? 0.5 : 0.12, ease: "easeOut" }}
         >
           {seconds}
           {suffix}

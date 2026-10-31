@@ -30,6 +30,7 @@ import {
   setUnauthorizedHandler,
 } from "./utils/oauth";
 import { storage } from "./utils/storage";
+import { teamColor } from "./utils/teamColors";
 
 const screenTransition = { ease: "easeInOut" as const, duration: 0.2 };
 
@@ -785,7 +786,22 @@ function App() {
             )}
             {screen === "theme-selection" && (
               <ThemeSelection
+                key={user ? "member" : "guest"}
                 user={user}
+                resumeGame={
+                  gameState && checkWinCondition(gameState).length === 0
+                    ? {
+                        themeName: gameState.settings.theme.name,
+                        round: gameState.currentRound,
+                        onResume: () =>
+                          go(
+                            gameState.roundResults.length > 0
+                              ? "round-results"
+                              : "game-play",
+                          ),
+                      }
+                    : undefined
+                }
                 onCreateTheme={() =>
                   user ? go("create-theme") : requestLogin()
                 }
@@ -836,6 +852,13 @@ function App() {
               <RoundResults
                 results={gameState.roundResults}
                 skipPenalty={Boolean(gameState.settings.skipPenalty)}
+                teamName={gameState.settings.selectedTeams[gameState.currentTeamIndex]}
+                teamColor={teamColor(gameState.currentTeamIndex)}
+                currentScore={
+                  gameState.teamScores[
+                    gameState.settings.selectedTeams[gameState.currentTeamIndex]
+                  ] ?? 0
+                }
                 lastWord={roundLastWord ?? undefined}
                 onConfirm={handleRoundResultsConfirm}
               />

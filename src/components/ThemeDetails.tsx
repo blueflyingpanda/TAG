@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useLocale } from "../contexts/LocaleContext";
 import type { GameSettings, Theme, User } from "../types";
+import { FadeImage } from "../ui/FadeImage";
 import GameSetup from "./GameSetup";
+import { API_BASE } from "../utils/config";
 import { trackEvent } from "../utils/analytics";
+import { friendlyError } from "../utils/errors";
 import { addThemeToFavorites, getTheme, removeThemeFromFavorites } from "../utils/themes";
 
 interface ThemeDetailsProps {
@@ -32,6 +35,8 @@ export default function ThemeDetails({
   const [copied, setCopied] = useState(false);
   const wordList = theme ? Object.keys(theme.description.words) : [];
 
+  const [reloadKey, setReloadKey] = useState(0);
+
   useEffect(() => {
     const fetchThemeDetails = async () => {
       try {
@@ -41,13 +46,17 @@ export default function ThemeDetails({
         setError(null);
       } catch (err) {
         console.error("Failed to fetch theme details:", err);
-        setError(t.td_failedLoad);
+        setError(
+          err instanceof Error && err.message === "Theme not found"
+            ? t.td_notFound
+            : friendlyError(err, t),
+        );
       } finally {
         setLoading(false);
       }
     };
     fetchThemeDetails();
-  }, [themeId]);
+  }, [themeId, reloadKey]);
 
   const handleToggleFavorite = async () => {
     if (!theme || isTogglingFavorite) return;
@@ -80,13 +89,22 @@ export default function ThemeDetails({
     return (
       <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-8 shadow-sm">
         <div className="mb-4 text-center text-error">{error || t.td_notFound}</div>
-        <button
-          type="button"
-          onClick={() => onBack(filters)}
-          className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
-        >
-          {t.td_back}
-        </button>
+        <div className="flex justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => onBack(filters)}
+            className="rounded-game border border-text/15 bg-text/[0.06] px-6 py-2 font-semibold text-text transition hover:bg-text/10"
+          >
+            {t.td_back}
+          </button>
+          <button
+            type="button"
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
+          >
+            {t.err_retry}
+          </button>
+        </div>
       </div>
     );
   }
@@ -120,7 +138,7 @@ export default function ThemeDetails({
             type="button"
             onClick={() => {
               navigator.clipboard.writeText(
-                `https://blueflyingpanda.github.io/TAG/theme/${theme.id}/`,
+                `${API_BASE}/share/themes/${theme.id}/`,
               );
               trackEvent("theme_shared", { theme_id: theme.id, method: "copy_link" });
               setCopied(true);
@@ -147,7 +165,7 @@ export default function ThemeDetails({
       <div className="space-y-6">
         {theme.cover_image_url && (
           <div className="aspect-video w-full max-w-xl overflow-hidden rounded-game border border-text/10">
-            <img src={theme.cover_image_url} alt="" className="h-full w-full object-cover" />
+            <FadeImage src={theme.cover_image_url} />
           </div>
         )}
         <div>

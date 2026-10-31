@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocale } from "../contexts/LocaleContext";
 import type { GameDetailsResponse, GameListItem, GameState } from "../types";
+import { friendlyError } from "../utils/errors";
+import { EmptyState } from "../ui/EmptyState";
 import { getGame, getGames } from "../utils/games";
 import { getTheme } from "../utils/themes";
 
@@ -19,6 +21,7 @@ export default function GameHistory({
   const [games, setGames] = useState<GameListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [selectedGame, setSelectedGame] = useState<GameDetailsResponse | null>(
     null,
   );
@@ -26,6 +29,7 @@ export default function GameHistory({
   useEffect(() => {
     const fetchGames = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const response = await getGames(
           1,
@@ -38,13 +42,14 @@ export default function GameHistory({
         );
         setGames(response.items);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load games");
+        setError(friendlyError(err, t));
       } finally {
         setIsLoading(false);
       }
     };
     fetchGames();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reloadKey]);
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleString();
@@ -57,18 +62,14 @@ export default function GameHistory({
         const gameDetails = await getGame(game.id);
         setSelectedGame(gameDetails);
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load the game details",
-        );
+        setError(friendlyError(err, t));
       }
     }
   };
 
   const handleResumeGame = async (game: GameDetailsResponse) => {
     if (!game.info?.teams || game.info.teams.length === 0) {
-      setError("Cannot resume game: missing teams data");
+      setError(t.err_generic);
       return;
     }
     try {
@@ -100,9 +101,7 @@ export default function GameHistory({
       };
       onResumeGame(gameState, game.id);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load theme data",
-      );
+      setError(friendlyError(err, t));
     }
   };
 
@@ -207,7 +206,14 @@ export default function GameHistory({
   if (isLoading) {
     return (
       <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-8 shadow-sm">
-        <div className="text-center text-text/80">{t.gh_loading}</div>
+        <div className="space-y-4" aria-label={t.gh_loading}>
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="animate-pulse rounded-game border border-text/10 bg-text/[0.04] p-4">
+              <div className="h-4 w-1/2 rounded bg-text/[0.1]" />
+              <div className="mt-3 h-3 w-1/3 rounded bg-text/[0.08]" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -216,13 +222,22 @@ export default function GameHistory({
     return (
       <div className="mx-auto w-full max-w-4xl rounded-game bg-card p-8 shadow-sm">
         <div className="mb-4 text-center text-error">{error}</div>
-        <button
-          type="button"
-          onClick={onBack}
-          className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
-        >
-          {t.gh_back}
-        </button>
+        <div className="flex justify-center gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="rounded-game border border-text/15 bg-text/[0.06] px-6 py-2 font-semibold text-text transition hover:bg-text/10"
+          >
+            {t.gh_back}
+          </button>
+          <button
+            type="button"
+            onClick={() => setReloadKey((k) => k + 1)}
+            className="rounded-game bg-success px-6 py-2 font-semibold text-white transition hover:opacity-90"
+          >
+            {t.err_retry}
+          </button>
+        </div>
       </div>
     );
   }
@@ -241,7 +256,7 @@ export default function GameHistory({
       </div>
 
       {games.length === 0 ? (
-        <p className="py-8 text-center text-text/60">{t.gh_noGames}</p>
+        <EmptyState icon="🕹️" message={t.gh_noGames} actionLabel={t.gh_emptyAction} onAction={onBack} />
       ) : (
         <div className="space-y-4">
           {games.map((game) => (

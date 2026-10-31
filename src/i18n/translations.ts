@@ -42,6 +42,18 @@ export interface Translations {
   ts_create: string;
   ts_unverifiedWarning: string;
   ts_noThemes: string;
+  ts_verifiedChip: string;
+  ts_unverifiedChip: string;
+  err_generic: string;
+  err_network: string;
+  err_retry: string;
+  rr_total: string;
+  ts_emptyMine: string;
+  ts_emptyFavorites: string;
+  ts_emptySearch: string;
+  ts_clearFilters: string;
+  ts_browseThemes: string;
+  gh_emptyAction: string;
   ts_importTitle: string;
   ts_importPlaceholder: string;
   ts_public: string;
@@ -101,6 +113,11 @@ export interface Translations {
   gp_score: (score: number, required: number) => string;
   gp_wordsRemaining: (count: number) => string;
   gp_startRound: string;
+  gp_swipeHintRight: string;
+  gp_swipeHintLeft: string;
+  gp_gotIt: string;
+  home_resumeTitle: string;
+  home_resumeAction: string;
 
   // RoundResults
   rr_title: string;
@@ -307,6 +324,18 @@ export const en: Translations = {
   ts_create: "Create Theme",
   ts_unverifiedWarning: "Unverified themes may contain inappropriate content",
   ts_noThemes: "No themes available. Import or Create a theme to get started.",
+  ts_verifiedChip: "Verified",
+  ts_unverifiedChip: "Unverified",
+  err_generic: "Something went wrong. Please try again.",
+  err_network: "Can't reach the server. Check your connection.",
+  err_retry: "Retry",
+  rr_total: "Total",
+  ts_emptyMine: "You haven't created any themes yet. Create your first one!",
+  ts_emptyFavorites: "No favourite themes yet. Tap the heart on a theme to save it here.",
+  ts_emptySearch: "No themes match your search or filters.",
+  ts_clearFilters: "Clear filters",
+  ts_browseThemes: "Browse themes",
+  gh_emptyAction: "Choose a theme",
   ts_importTitle: "Import Theme",
   ts_importPlaceholder: `Paste theme JSON here...\n\nExample format:\n{\n  "name": "My Theme",\n  "language": "en",\n  "description": {\n    "teams": ["Team 1", ...],\n    "words": { "word": { "difficulty": 1 }, ... }\n  }\n}`,
   ts_public: "Public",
@@ -363,6 +392,11 @@ export const en: Translations = {
   gp_score: (score, required) => `${score} / ${required}`,
   gp_wordsRemaining: (count) => `${count} words remaining`,
   gp_startRound: "Start Round",
+  gp_swipeHintRight: "Swipe right: guessed",
+  gp_swipeHintLeft: "Swipe left: skip",
+  gp_gotIt: "Got it",
+  home_resumeTitle: "Game in progress",
+  home_resumeAction: "Resume game",
 
   rr_title: "Round Results",
   rr_hint: "Tap words to toggle between ✅ and ❌",
@@ -564,6 +598,18 @@ export const ru: Translations = {
   ts_create: "Создать тему",
   ts_unverifiedWarning: "Непроверенные темы могут содержать неподходящий контент",
   ts_noThemes: "Темы не найдены. Импортируйте или создайте тему.",
+  ts_verifiedChip: "Проверено",
+  ts_unverifiedChip: "Не проверено",
+  err_generic: "Что-то пошло не так. Попробуйте ещё раз.",
+  err_network: "Нет связи с сервером. Проверьте подключение.",
+  err_retry: "Повторить",
+  rr_total: "Всего",
+  ts_emptyMine: "Вы ещё не создали ни одной темы. Создайте первую!",
+  ts_emptyFavorites: "В избранном пока пусто. Нажмите на сердечко у темы, чтобы сохранить её здесь.",
+  ts_emptySearch: "Темы по вашему запросу не найдены.",
+  ts_clearFilters: "Сбросить фильтры",
+  ts_browseThemes: "Смотреть темы",
+  gh_emptyAction: "Выбрать тему",
   ts_importTitle: "Импорт темы",
   ts_importPlaceholder: `Вставьте JSON темы сюда...\n\nПример формата:\n{\n  "name": "Моя тема",\n  "language": "ru",\n  "description": {\n    "teams": ["Команда 1", ...],\n    "words": { "слово": { "difficulty": 1 }, ... }\n  }\n}`,
   ts_public: "Публичная",
@@ -620,6 +666,11 @@ export const ru: Translations = {
   gp_score: (score, required) => `${score} / ${required}`,
   gp_wordsRemaining: (count) => `Осталось слов: ${count}`,
   gp_startRound: "Начать раунд",
+  gp_swipeHintRight: "Свайп вправо: угадано",
+  gp_swipeHintLeft: "Свайп влево: пропуск",
+  gp_gotIt: "Понятно",
+  home_resumeTitle: "Игра продолжается",
+  home_resumeAction: "Продолжить игру",
 
   rr_title: "Результаты раунда",
   rr_hint: "Нажмите на слово, чтобы изменить результат",

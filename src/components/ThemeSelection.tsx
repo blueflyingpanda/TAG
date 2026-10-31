@@ -1,23 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale } from "../contexts/LocaleContext";
 import type { ThemeListItem, ThemeOrderByType, User } from "../types";
 import { ThemeOrderBy } from "../types";
+import { friendlyError } from "../utils/errors";
+import { EmptyState } from "../ui/EmptyState";
+import { FadeImage } from "../ui/FadeImage";
 import { createTheme, getThemes } from "../utils/themes";
 
 interface ThemeSelectionProps {
+  resumeGame?: { themeName: string; round: number; onResume: () => void };
   user: User | null;
   onCreateTheme?: () => void;
   onThemeDetails?: (themeId: number, filters?: URLSearchParams) => void;
 }
 
-function renderVerificationStatus(verified: boolean): string {
-  return verified ? "✅" : "❌";
-}
-
 // URL parameter management
 const FILTER_PARAMS = ["search", "order", "descending", "mine", "favourites", "unverified"];
 
-function getFiltersFromURL(): {
+function getFiltersFromURL(defaults: { order: ThemeOrderByType; descending: boolean }): {
   searchTerm: string;
   orderBy: ThemeOrderByType;
   orderDescending: boolean;
@@ -29,15 +29,17 @@ function getFiltersFromURL(): {
 
   return {
     searchTerm: urlParams.get("search") || "",
-    orderBy: (urlParams.get("order") as ThemeOrderByType) || ThemeOrderBy.ID,
-    orderDescending: urlParams.get("descending") === "true",
+    orderBy: (urlParams.get("order") as ThemeOrderByType) || defaults.order,
+    orderDescending: urlParams.has("descending")
+      ? urlParams.get("descending") === "true"
+      : defaults.descending,
     onlyMyThemes: urlParams.get("mine") === "true",
     onlyFavorites: urlParams.get("favourites") === "true",
     showUnverified: urlParams.get("unverified") === "true",
   };
 }
 
-function updateURLWithFilters(filters: {
+function updateURLWithFilters(defaults: { order: ThemeOrderByType; descending: boolean }, filters: {
   searchTerm: string;
   orderBy: ThemeOrderByType;
   orderDescending: boolean;
@@ -52,9 +54,10 @@ function updateURLWithFilters(filters: {
 
   // Set new params
   if (filters.searchTerm) url.searchParams.set("search", filters.searchTerm);
-  if (filters.orderBy !== ThemeOrderBy.ID)
+  if (filters.orderBy !== defaults.order)
     url.searchParams.set("order", filters.orderBy);
-  if (filters.orderDescending) url.searchParams.set("descending", "true");
+  if (filters.orderDescending !== defaults.descending)
+    url.searchParams.set("descending", String(filters.orderDescending));
   if (filters.onlyMyThemes) url.searchParams.set("mine", "true");
   if (filters.onlyFavorites) url.searchParams.set("favourites", "true");
   if (filters.showUnverified) url.searchParams.set("unverified", "true");
@@ -65,15 +68,25 @@ function updateURLWithFilters(filters: {
 
 export default function ThemeSelection({
   user,
+  resumeGame,
   onCreateTheme,
   onThemeDetails,
 }: ThemeSelectionProps) {
   const { t, locale } = useLocale();
 
   // Initialize state from URL parameters
-  const initialFilters = getFiltersFromURL();
+  // Guests land on the most liked themes; signed-in users keep the creation-date order
+  const defaults = {
+    order: user ? ThemeOrderBy.ID : ThemeOrderBy.LIKES,
+    descending: !user,
+  };
+  const initialFilters = getFiltersFromURL(defaults);
 
   const [themes, setThemes] = useState<ThemeListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const requestSeq = useRef(0);
+  const [reloadKey, setReloadKey] = useState(0);
   const selectedLang = locale;
   const [onlyMyThemes, setOnlyMyThemes] = useState(initialFilters.onlyMyThemes);
   const [onlyFavorites, setOnlyFavorites] = useState(
@@ -95,6 +108,9 @@ export default function ThemeSelection({
   );
 
   const fetchThemes = async () => {
+    const seq = ++requestSeq.current;
+    setIsLoading(true);
+    setLoadError(null);
     try {
       const response = await getThemes(
         1,
@@ -107,15 +123,29 @@ export default function ThemeSelection({
         orderBy,
         orderDescending,
       );
-      setThemes(response.items);
+      if (seq === requestSeq.current) setThemes(response.items);
     } catch (err) {
       console.error("Failed to fetch themes:", err);
+      if (seq === requestSeq.current) setLoadError(friendlyError(err, t));
+    } finally {
+      if (seq === requestSeq.current) setIsLoading(false);
     }
+  };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setOnlyMyThemes(false);
+    setOnlyFavorites(false);
+    setShowUnverified(false);
+    setOrderBy(defaults.order);
+    setOrderDescending(defaults.descending);
+    setReloadKey((k) => k + 1);
   };
 
   useEffect(() => {
     fetchThemes();
   }, [
+    reloadKey,
     selectedLang,
     onlyMyThemes,
     onlyFavorites,
@@ -126,7 +156,7 @@ export default function ThemeSelection({
 
   // Update URL when filters change
   useEffect(() => {
-    updateURLWithFilters({
+    updateURLWithFilters(defaults, {
       searchTerm,
       orderBy,
       orderDescending,
@@ -142,6 +172,39 @@ export default function ThemeSelection({
     onlyFavorites,
     showUnverified,
   ]);
+
+  const orderLabels: Record<string, string> = {
+    [ThemeOrderBy.ID]: t.ts_orderByDate,
+    [ThemeOrderBy.NAME]: t.ts_orderByName,
+    [ThemeOrderBy.LIKES]: t.ts_orderByLikes,
+  };
+  const activeChips: { key: string; label: string; onRemove: () => void }[] = [];
+  if (searchTerm) {
+    activeChips.push({
+      key: "search",
+      label: `“${searchTerm}”`,
+      onRemove: () => {
+        setSearchTerm("");
+        setReloadKey((k) => k + 1);
+      },
+    });
+  }
+  if (onlyMyThemes)
+    activeChips.push({ key: "mine", label: t.ts_onlyMine, onRemove: () => setOnlyMyThemes(false) });
+  if (onlyFavorites)
+    activeChips.push({ key: "fav", label: t.ts_onlyFavorites, onRemove: () => setOnlyFavorites(false) });
+  if (showUnverified)
+    activeChips.push({ key: "unverified", label: t.ts_showUnverified, onRemove: () => setShowUnverified(false) });
+  if (orderBy !== defaults.order || orderDescending !== defaults.descending) {
+    activeChips.push({
+      key: "sort",
+      label: `${orderLabels[orderBy] ?? orderBy} ${orderDescending ? "↓" : "↑"}`,
+      onRemove: () => {
+        setOrderBy(defaults.order);
+        setOrderDescending(defaults.descending);
+      },
+    });
+  }
 
   const handleImport = async () => {
     try {
@@ -255,6 +318,24 @@ export default function ThemeSelection({
       <h1 className="mb-6 text-center text-3xl font-bold text-text">
         {t.ts_title}
       </h1>
+
+      {resumeGame && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-game border border-success/40 bg-success/10 p-4">
+          <div className="min-w-0">
+            <div className="font-semibold text-text">{t.home_resumeTitle}</div>
+            <div className="truncate text-sm text-text/70">
+              {resumeGame.themeName} · {t.gp_round(resumeGame.round)}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={resumeGame.onResume}
+            className="rounded-game bg-success px-5 py-2 font-semibold text-white transition hover:opacity-90"
+          >
+            {t.home_resumeAction}
+          </button>
+        </div>
+      )}
 
       <div className="mb-6 space-y-4">
         {/* Row 1: Filtering */}
@@ -380,16 +461,61 @@ export default function ThemeSelection({
         </div>
       )}
 
+      {activeChips.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {activeChips.map((chip) => (
+            <button
+              key={chip.key}
+              type="button"
+              onClick={chip.onRemove}
+              className="flex items-center gap-1.5 rounded-full border border-text/15 bg-text/[0.06] px-3 py-1 text-sm text-text transition hover:bg-text/10"
+            >
+              {chip.label}
+              <span aria-hidden className="text-text/60">×</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {loadError && !isLoading && (
+        <EmptyState
+          icon="⚠️"
+          message={loadError}
+          actionLabel={t.err_retry}
+          onAction={fetchThemes}
+        />
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {themes.map((theme) => (
+        {isLoading &&
+          Array.from({ length: 6 }, (_, i) => (
+            <div
+              key={i}
+              className="flex animate-pulse flex-col overflow-hidden rounded-game border border-text/10 bg-text/[0.04]"
+              aria-hidden
+            >
+              <div className="aspect-video w-full bg-text/[0.08]" />
+              <div className="p-4">
+                <div className="h-12">
+                  <div className="h-4 w-3/4 rounded bg-text/[0.1]" />
+                </div>
+                <div className="mt-1 h-10 space-y-2">
+                  <div className="h-3 w-full rounded bg-text/[0.08]" />
+                  <div className="h-3 w-2/3 rounded bg-text/[0.08]" />
+                </div>
+              </div>
+            </div>
+          ))}
+        {!isLoading && themes.map((theme) => (
           <button
             key={theme.id}
             onClick={() => {
               if (onThemeDetails) {
                 const filters = new URLSearchParams();
                 if (searchTerm) filters.set("search", searchTerm);
-                if (orderBy !== ThemeOrderBy.ID) filters.set("order", orderBy);
-                if (orderDescending) filters.set("descending", "true");
+                if (orderBy !== defaults.order) filters.set("order", orderBy);
+                if (orderDescending !== defaults.descending)
+                  filters.set("descending", String(orderDescending));
                 if (onlyMyThemes) filters.set("mine", "true");
                 if (onlyFavorites) filters.set("favourites", "true");
                 if (showUnverified) filters.set("unverified", "true");
@@ -399,29 +525,32 @@ export default function ThemeSelection({
             type="button"
             className="flex flex-col overflow-hidden rounded-game border border-text/10 bg-text/[0.04] text-left transition hover:border-success/40 hover:bg-text/[0.08]"
           >
-            <div className="aspect-video w-full bg-text/[0.06]">
+            <div className="relative aspect-video w-full bg-text/[0.06]">
               {theme.cover_image_url ? (
-                <img
-                  src={theme.cover_image_url}
-                  alt=""
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
+                <FadeImage src={theme.cover_image_url} />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-4xl text-text/25">
                   🖼️
                 </div>
               )}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent" />
+              <span
+                className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  theme.verified
+                    ? "bg-success text-white"
+                    : "bg-black/50 text-white/90"
+                }`}
+              >
+                {theme.verified ? t.ts_verifiedChip : t.ts_unverifiedChip}
+              </span>
+              <span className="absolute bottom-2 right-2 text-sm font-semibold text-white drop-shadow">
+                ❤️ {theme.likes_count ?? 0}
+              </span>
             </div>
             <div className="p-4">
-              <div className="flex h-12 items-start justify-between gap-2">
-                <h3 className="line-clamp-2 font-semibold text-text">
-                  {renderVerificationStatus(theme.verified)} {theme.name}
-                </h3>
-                <span className="shrink-0 text-sm text-text/70">
-                  ❤️ {theme.likes_count ?? 0}
-                </span>
-              </div>
+              <h3 className="line-clamp-2 h-12 font-semibold text-text">
+                {theme.name}
+              </h3>
               <p className="mt-1 line-clamp-2 h-10 text-sm text-text/70">
                 {theme.summary}
               </p>
@@ -430,10 +559,31 @@ export default function ThemeSelection({
         ))}
       </div>
 
-      {themes.length === 0 && (
-        <p className="py-8 text-center text-text/60">
-          {t.ts_noThemes}
-        </p>
+      {!isLoading && !loadError && themes.length === 0 && (
+        onlyMyThemes ? (
+          <EmptyState
+            icon="✏️"
+            message={t.ts_emptyMine}
+            actionLabel={t.ts_create}
+            onAction={() => onCreateTheme?.()}
+          />
+        ) : onlyFavorites ? (
+          <EmptyState
+            icon="🤍"
+            message={t.ts_emptyFavorites}
+            actionLabel={t.ts_browseThemes}
+            onAction={() => setOnlyFavorites(false)}
+          />
+        ) : searchTerm || showUnverified ? (
+          <EmptyState
+            icon="🔍"
+            message={t.ts_emptySearch}
+            actionLabel={t.ts_clearFilters}
+            onAction={clearFilters}
+          />
+        ) : (
+          <EmptyState icon="🎲" message={t.ts_noThemes} />
+        )
       )}
 
       {showImportDialog && (

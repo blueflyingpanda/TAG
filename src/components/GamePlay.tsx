@@ -4,7 +4,9 @@ import { useLocale } from "../contexts/LocaleContext";
 import type { GameState } from "../types";
 import { Button } from "../ui/Button";
 import { Countdown } from "../ui/Countdown";
+import { Confetti } from "../ui/Confetti";
 import { Counter } from "../ui/Counter";
+import { CountUp } from "../ui/CountUp";
 import {
   checkWinCondition,
   getAvailableWords,
@@ -12,6 +14,7 @@ import {
   shuffleArray,
 } from "../utils/game";
 import { storage } from "../utils/storage";
+import { teamColor } from "../utils/teamColors";
 import { GamePlayCardStack } from "./GamePlayCardStack";
 
 interface GamePlayProps {
@@ -367,9 +370,12 @@ export default function GamePlay({
 
   const displaySeconds = currentTime || remainingTime;
   const timerWarning =
-    displaySeconds <= 5 && displaySeconds > 0 && !gameState.isPaused;
+    displaySeconds <= 10 && displaySeconds > 0 && !gameState.isPaused;
   const guessedThisRound = roundResults.filter((r) => r.guessed).length;
   const skippedThisRound = roundResults.filter((r) => !r.guessed).length;
+
+  const colorOf = (team: string) =>
+    teamColor(Math.max(0, gameState.settings.selectedTeams.indexOf(team)));
 
   const backWord =
     !roundEndingRef.current &&
@@ -381,8 +387,9 @@ export default function GamePlay({
 
   if (winners.length > 0) {
     return (
-      <div className="fixed inset-0 flex flex-col bg-transparent p-4">
-        <div className="flex-1 overflow-y-auto pb-20">
+      <div className="flex flex-col bg-transparent">
+        <Confetti />
+        <div className="pb-24">
           <motion.div
             className="mx-auto w-full max-w-2xl space-y-6 rounded-game border border-text/10 bg-card p-8 text-center shadow-sm"
             initial={{ scale: 0.8, opacity: 0 }}
@@ -391,7 +398,10 @@ export default function GamePlay({
           >
             <div className="mb-3 text-5xl">🎉</div>
             <h1 className="mb-4 text-4xl font-bold text-text">{t.gp_gameOver}</h1>
-            <h2 className="mb-6 text-2xl font-semibold text-success">
+            <h2
+              className="mb-6 text-2xl font-semibold text-success"
+              style={winners.length === 1 ? { color: colorOf(winners[0]) } : undefined}
+            >
               {winners.length === 1
                 ? t.gp_singleWinner(winners[0])
                 : t.gp_multipleWinners(winners.join(" & "))}
@@ -402,12 +412,14 @@ export default function GamePlay({
                 <div
                   key={team}
                   className="flex items-center justify-between rounded-game border border-text/10 bg-text/[0.04] p-3"
+                  style={{ borderLeft: `6px solid ${colorOf(team)}` }}
                 >
                   <span className="truncate text-base font-semibold text-text">
+                    {winners.includes(team) ? "🏆 " : ""}
                     {team}
                   </span>
-                  <span className="ml-2 text-lg font-bold text-success">
-                    {score}
+                  <span className="ml-2 text-lg font-bold" style={{ color: colorOf(team) }}>
+                    <CountUp value={score} />
                   </span>
                 </div>
               ))}
@@ -439,7 +451,10 @@ export default function GamePlay({
           <h2 className="text-3xl font-bold text-text">
             {t.gp_round(gameState.currentRound)}
           </h2>
-          <div className="mx-auto w-full truncate text-lg font-bold text-success">
+          <div
+            className="mx-auto w-full truncate text-lg font-bold"
+            style={{ color: colorOf(currentTeam) }}
+          >
             {currentTeam}
           </div>
 
@@ -450,7 +465,13 @@ export default function GamePlay({
                 key={team}
                 className="flex items-center justify-between text-text"
               >
-                <span>{team}</span>
+                <span className="flex items-center gap-2 truncate">
+                  <span
+                    className="inline-block h-3 w-3 shrink-0 rounded-full"
+                    style={{ backgroundColor: colorOf(team) }}
+                  />
+                  {team}
+                </span>
                 <span className="font-bold">
                   {t.gp_score(score, gameState.settings.pointsRequired)}
                 </span>
@@ -482,7 +503,10 @@ export default function GamePlay({
         <div className="text-base font-semibold text-text md:text-lg">
           {t.gp_round(gameState.currentRound)}
         </div>
-        <div className="max-w-xs truncate text-base font-bold text-success md:text-lg">
+        <div
+          className="max-w-xs truncate text-base font-bold md:text-lg"
+          style={{ color: colorOf(currentTeam) }}
+        >
           {currentTeam}
         </div>
       </div>
@@ -491,6 +515,7 @@ export default function GamePlay({
         <Countdown
           seconds={displaySeconds}
           isWarning={timerWarning}
+          isPulsing={timerWarning}
           suffix="s"
         />
         <div className="flex items-center gap-6 text-text/60">
