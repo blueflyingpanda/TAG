@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocale } from "../contexts/LocaleContext";
 import type { GameSettings, Theme, User } from "../types";
 import GameSetup from "./GameSetup";
+import { trackEvent } from "../utils/analytics";
 import { addThemeToFavorites, getTheme, removeThemeFromFavorites } from "../utils/themes";
 
 interface ThemeDetailsProps {
@@ -121,6 +122,7 @@ export default function ThemeDetails({
               navigator.clipboard.writeText(
                 `https://blueflyingpanda.github.io/TAG/theme/${theme.id}/`,
               );
+              trackEvent("theme_shared", { theme_id: theme.id, method: "copy_link" });
               setCopied(true);
               setTimeout(() => setCopied(false), 2000);
             }}

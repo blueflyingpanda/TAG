@@ -8,6 +8,7 @@
  */
 
 import type { User } from '../types';
+import { getAnalyticsHeaders } from './analytics';
 import { API_BASE, AUTH_ENDPOINTS } from './config';
 
 const TOKEN_STORAGE_KEY = 'auth_token';
@@ -167,6 +168,7 @@ export function setUnauthorizedHandler(handler: () => void): void {
 export async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
   const authHeader = getAuthHeader();
   const headers = {
+    ...getAnalyticsHeaders(),
     ...options.headers,
     ...authHeader,
   };
